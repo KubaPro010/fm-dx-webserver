@@ -24,9 +24,9 @@ const { createAudioServer } = require('./stream/ws.js');
 const helpers = require('./helpers');
 const dataHandler = require('./datahandler');
 const fmdxList = require('./fmdx_list');
-const { logDebug, logError, logInfo, logWarn, logChat } = require('./console');
+const { logError, logInfo, logWarn } = require('./console');
 const storage = require('./storage');
-const { serverConfig, configExists, configSave } = require('./server_config');
+const { serverConfig, configExists } = require('./server_config');
 const pjson = require('../package.json');
 
 // Function to find server files based on the plugins listed in config

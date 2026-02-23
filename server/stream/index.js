@@ -50,7 +50,7 @@ checkFFmpeg().then((ffmpegPath) => {
         return [
             "-fflags", "+nobuffer+flush_packets",
             "-flags", "low_delay",
-            "-rtbufsize", "32",
+            "-rtbufsize", "2048",
             "-probesize", "32",
 
             ...inputArgs,
