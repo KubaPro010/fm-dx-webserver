@@ -16,9 +16,9 @@ const path = require('path');
 const net = require('net');
 const client = new net.Socket();
 const { SerialPort } = require('serialport');
-const audioServer = require('./stream/3las.server');
 const tunnel = require('./tunnel');
 const { createChatServer } = require('./chat');
+const { createAudioServer } = require('./stream/ws.js');
 
 // File imports
 const helpers = require('./helpers');
@@ -90,8 +90,8 @@ console.log('\x1b[32m\x1b[2mby Noobish @ \x1b[4mFMDX.org\x1b[0m');
 console.log("v" + pjson.version)
 console.log('\x1b[90m' + '─'.repeat(terminalWidth - 1) + '\x1b[0m');
 
-
 const chatWss = createChatServer(storage);
+const audioWss = createAudioServer();
 // Start ffmpeg
 require('./stream/index');
 require('./plugins');
@@ -617,34 +617,10 @@ pluginsWss.on('connection', (ws, request) => {
         });
     });
 
-    ws.on('close', () => {
-        // logInfo('WebSocket Extra connection closed'); // Use custom logInfo function
-    });
-
     ws.on('error', error => {
         logError('WebSocket Extra error: ' + error); // Use custom logError function
     });
 });
-
-function isPortOpen(host, port, timeout = 1000) {
-    return new Promise((resolve) => {
-        const socket = new net.Socket();
-
-        const onError = () => {
-            socket.destroy();
-            resolve(false);
-        };
-
-        socket.setTimeout(timeout);
-        socket.once('error', onError);
-        socket.once('timeout', onError);
-
-        socket.connect(port, host, () => {
-            socket.end();
-            resolve(true);
-        });
-    });
-}
 
 // Websocket register for /text, /audio and /chat paths 
 httpServer.on('upgrade', (request, socket, head) => {
@@ -655,14 +631,11 @@ httpServer.on('upgrade', (request, socket, head) => {
       });
     });
   } else if (request.url === '/audio') {
-    if (typeof audioServer?.handleAudioUpgrade === 'function') {
-      audioServer.handleAudioUpgrade(request, socket, head, (ws) => {
-        audioServer.Server?.Server?.emit?.('connection', ws, request);
+    sessionMiddleware(request, {}, () => {
+      audioWss.handleUpgrade(request, socket, head, (ws) => {
+        audioWss.emit('connection', ws, request);
       });
-    } else {
-      logWarn('[Audio WebSocket] Audio server not ready — dropping client connection.');
-      socket.destroy();
-    }
+    });
   } else if (request.url === '/chat' && serverConfig.webserver.chatEnabled === true) {
     sessionMiddleware(request, {}, () => {
       chatWss.handleUpgrade(request, socket, head, (ws) => {

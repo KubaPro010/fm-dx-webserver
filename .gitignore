@@ -2,7 +2,7 @@ node_modules/
 /*.json
 /serverlog.txt
 /web/js/plugins/
-/libraries/**
+/libraries/
 /plugins/*
 !/plugins/example/frontend.js
 !/plugins/example.js

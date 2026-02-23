@@ -1,8 +1,8 @@
-const { spawn, execSync } = require('child_process');
-const { configName, serverConfig, configUpdate, configSave, configExists } = require('../server_config');
+const { spawn } = require('child_process');
+const { serverConfig } = require('../server_config');
 const { logDebug, logError, logInfo, logWarn, logFfmpeg } = require('../console');
 const checkFFmpeg = require('./checkFFmpeg');
-const audioServer = require('./3las.server');
+const { PassThrough } = require('stream');
 
 const consoleLogTitle = '[Audio Stream]';
 
@@ -15,384 +15,144 @@ function connectMessage(message) {
     }
 }
 
-function checkAudioUtilities() {
-    if (process.platform === 'darwin') {
-        try {
-            execSync('which sox');
-        } catch (error) {
-            logError(`${consoleLogTitle} Error: SoX ("sox") not found, Please install sox.`);
-            process.exit(1);
-        }
-    } else if (process.platform === 'linux') {
-        try {
-            execSync('which arecord');
-        } catch (error) {
-            logError(`${consoleLogTitle} Error: ALSA ("arecord") not found. Please install ALSA utils.`);
-            process.exit(1);
-        }
-    }
-}
-
-function buildCommand(ffmpegPath) {
-    const inputDevice = serverConfig.audio.audioDevice || 'Stereo Mix';
-    const audioChannels = serverConfig.audio.audioChannels || 2;
-    const webPort = Number(serverConfig.webserver.webserverPort);
-
-    // Common audio options for FFmpeg
-    const baseOptions = {
-        flags: ['-fflags', '+nobuffer+flush_packets', '-flags', 'low_delay', '-rtbufsize', '6192', '-probesize', '32'],
-        codec: ['-acodec', 'pcm_s16le', '-ar', '48000', '-ac', `${audioChannels}`],
-        output: ['-f', 's16le', '-fflags', '+nobuffer+flush_packets', '-packetsize', '384', '-flush_packets', '1', '-bufsize', '960', '-reconnect', '1', '-reconnect_streamed', '1', '-reconnect_delay_max', '10', 'pipe:1']
-    };
-
-    // Windows
-    if (process.platform === 'win32') {
-        logInfo(`${consoleLogTitle} Platform: Windows (win32). Using "dshow" input.`);
-        return {
-            command: ffmpegPath,
-            args: [
-                ...baseOptions.flags,
-                '-f', 'dshow',
-                '-audio_buffer_size', '200',
-                '-i', `audio=${inputDevice}`,
-                ...baseOptions.codec,
-                ...baseOptions.output
-            ]
-        };
-    } else if (process.platform === 'darwin') {
-        // macOS
-        if (!serverConfig.audio.ffmpeg) {
-            logInfo(`${consoleLogTitle} Platform: macOS (darwin) using "coreaudio"`);
-            return {
-                args: [],
-                soxArgs: [
-                    '-t', 'coreaudio', `${inputDevice}`,
-                    '-b', '32',
-                    '-r', '48000',
-                    '-c', `${audioChannels}`,
-                    '-t', 'raw',
-                    '-b', '16',
-                    '-r', '48000',
-                    '-c', `${audioChannels}`
-                    , '-'
-                ]
-            };
-        } else {
-            const device = serverConfig.audio.audioDevice;
-            return {
-                command: ffmpegPath,
-                args: [
-                    ...baseOptions.flags,
-                    '-f', 'avfoundation',
-                    '-i', `${device || ':0'}`,
-                    ...baseOptions.codec,
-                    ...baseOptions.output
-                ]
-            };
-        }
-    } else {
-        // Linux
-        if (!serverConfig.audio.ffmpeg) {
-            const prefix = serverConfig.audio.softwareMode ? 'plug' : '';
-            const device = `${prefix}${serverConfig.audio.audioDevice}`;
-            logInfo(`${consoleLogTitle} Platform: Linux. Using "alsa" input.`);
-            return {
-                // command not used if arecordArgs are used
-                command: `while true; do arecord -D "${device}" -f S16_LE -r 48000 -c ${audioChannels} -t raw; done`,
-                args: [],
-                arecordArgs: [
-                    '-D', device,
-                    '-f', 'S16_LE',
-                    '-r', '48000',
-                    '-c', audioChannels,
-                    '-t', 'raw'
-                ],
-                ffmpegArgs: []
-            };
-        } else {
-            const device = serverConfig.audio.audioDevice;
-            return {
-                command: ffmpegPath,
-                args: [
-                    ...baseOptions.flags,
-                    '-f', 'alsa',
-                    '-i', `${device}`,
-                    ...baseOptions.codec,
-                    ...baseOptions.output
-                ],
-                arecordArgs: [],
-            };
-        }
-    }
-}
+const audio_pipe = new PassThrough();
 
 checkFFmpeg().then((ffmpegPath) => {
-    if (!serverConfig.audio.ffmpeg) checkAudioUtilities();
-    let audioErrorLogged = false;
+    logInfo(`${consoleLogTitle} Using ${ffmpegPath === 'ffmpeg' ? 'system-installed FFmpeg' : 'ffmpeg-static'}`);
+    logInfo(`${consoleLogTitle} Starting audio stream on device: \x1b[35m${serverConfig.audio.audioDevice}\x1b[0m`);
 
-    logInfo(`${consoleLogTitle} Using`, ffmpegPath === 'ffmpeg' ? 'system-installed FFmpeg' : 'ffmpeg-static');
+    const sampleRate =
+        Number(this?.Server?.SampleRate || serverConfig.audio.sampleRate || 48000) +
+        Number(serverConfig.audio.samplerateOffset || 0);
 
-    if (process.platform !== 'darwin') {
-        logInfo(`${consoleLogTitle} Starting audio stream on device: \x1b[35m${serverConfig.audio.audioDevice}\x1b[0m`);
-    } else {
-        logInfo(`${consoleLogTitle} Starting audio stream on default input device.`);
+    const channels =
+        Number(this?.Server?.Channels || serverConfig.audio.audioChannels || 2);
+
+    let ffmpeg = null;
+    let restartTimer = null;
+    let lastTimestamp = null;
+    let staleCount = 0;
+    let lastCheckTime = Date.now();
+
+    function buildArgs() {
+        const device = serverConfig.audio.audioDevice;
+
+        let inputArgs;
+
+        if (process.platform === 'win32') {
+            inputArgs = ["-f", "dshow", "-i", `audio=${device}`];
+        } else if (process.platform === 'darwin') {
+            inputArgs = ["-f", "avfoundation", "-i", device || ":0"];
+        } else {
+            inputArgs = ["-f", "alsa", "-i", device];
+        }
+
+        return [
+            "-fflags", "+nobuffer+flush_packets",
+            "-flags", "low_delay",
+            "-rtbufsize", "32",
+            "-probesize", "32",
+
+            ...inputArgs,
+
+            "-ar", String(sampleRate),
+            "-ac", String(channels),
+
+            "-c:a", "libmp3lame",
+            "-b:a", serverConfig.audio.audioBitrate,
+            "-ac", String(channels),
+            "-reservoir", "0",
+
+            "-f", "mp3",
+            "-write_xing", "0",
+            "-id3v2_version", "0",
+
+            "-fflags", "+nobuffer",
+            "-flush_packets", "1",
+
+            "pipe:1"
+        ];
     }
 
-    if (process.platform === 'win32') {
-        // Windows (FFmpeg DirectShow Capture)
-        let ffmpeg;
-        let restartTimer = null;
-        let lastTimestamp = null;
-        let lastCheckTime = Date.now();
-        let audioErrorLogged = false;
-        let staleCount = 0;
+    function launchFFmpeg() {
+        const args = buildArgs();
 
-        function launchFFmpeg() {
-            const commandDef = buildCommand(ffmpegPath);
-            let ffmpegArgs = commandDef.args;
+        logDebug(`${consoleLogTitle} Launching FFmpeg with args: ${args.join(' ')}`);
 
-            // Apply audio boost if enabled
-            if (serverConfig.audio.audioBoost) {
-                ffmpegArgs.splice(ffmpegArgs.indexOf('pipe:1'), 0, '-af', 'volume=1.7');
-            }
+        ffmpeg = spawn(ffmpegPath, args, {
+            stdio: ['ignore', 'pipe', 'pipe']
+        });
 
-            logDebug(`${consoleLogTitle} Launching FFmpeg with args: ${ffmpegArgs.join(' ')}`);
-            ffmpeg = spawn(ffmpegPath, ffmpegArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
+        ffmpeg.stdout.pipe(audio_pipe, { end: false });
 
-            audioServer.waitUntilReady.then(() => {
-                audioServer.Server.StdIn = ffmpeg.stdout;
-                audioServer.Server.Run();
-                connectMessage(`${consoleLogTitle} Connected FFmpeg (capture) \u2192 FFmpeg (process) \u2192 Server.StdIn${serverConfig.audio.audioBoost ? ' (audio boost)' : ''}`);
-            });
+        connectMessage(
+            `${consoleLogTitle} Connected FFmpeg → MP3 → Server.StdIn`
+        );
 
-            ffmpeg.stderr.on('data', (data) => {
-                const msg = data.toString();
-                logFfmpeg(`[FFmpeg stderr]: ${msg}`);
+        ffmpeg.stderr.on('data', (data) => {
+            const msg = data.toString();
+            logFfmpeg(`[FFmpeg stderr]: ${msg}`);
 
-                if (msg.includes('I/O error') && !audioErrorLogged) {
-                    audioErrorLogged = true;
-                    logError(`${consoleLogTitle} Audio device "${serverConfig.audio.audioDevice}" failed to start.`);
-                    logError('Please start the server with: node . --ffmpegdebug for more info.');
-                }
+            // Detect frozen timestamps
+            const match = msg.match(/time=(\d\d):(\d\d):(\d\d\.\d+)/);
+            if (match) {
+                const [_, hh, mm, ss] = match;
+                const totalSec =
+                    parseInt(hh) * 3600 +
+                    parseInt(mm) * 60 +
+                    parseFloat(ss);
 
-                // Detect frozen timestamp
-                const match = msg.match(/time=(\d\d):(\d\d):(\d\d\.\d+)/);
-                if (match) {
-                    const [_, hh, mm, ss] = match;
-                    const totalSec = parseInt(hh) * 3600 + parseInt(mm) * 60 + parseFloat(ss);
+                if (lastTimestamp !== null && totalSec === lastTimestamp) {
+                    staleCount++;
+                    const now = Date.now();
 
-                    if (lastTimestamp !== null && totalSec === lastTimestamp) {
-                        const now = Date.now();
-                        staleCount++;
-                        if (staleCount >= 10 && now - lastCheckTime > 10000 && !restartTimer) {
-                            restartTimer = setTimeout(() => {
-                                restartTimer = null;
-                                staleCount = 0;
-                                try {
-                                    ffmpeg.kill('SIGKILL');
-                                } catch (e) {
-                                    logWarn(`${consoleLogTitle} Failed to kill FFmpeg process: ${e.message}`);
-                                }
-                                launchFFmpeg(); // Restart FFmpeg
-                            }, 0);
-                            setTimeout(() => logWarn(`${consoleLogTitle} FFmpeg appears frozen. Restarting...`), 100);
-                        }
-                    } else {
-                        lastTimestamp = totalSec;
-                        lastCheckTime = Date.now();
-                        staleCount = 0;
+                    if (staleCount >= 10 && now - lastCheckTime > 10000 && !restartTimer) {
+                        logWarn(`${consoleLogTitle} FFmpeg appears frozen. Restarting...`);
+
+                        restartTimer = setTimeout(() => {
+                            restartTimer = null;
+                            staleCount = 0;
+                            try {
+                                ffmpeg.kill('SIGKILL');
+                            } catch (e) {
+                                logWarn(`${consoleLogTitle} Failed to kill FFmpeg: ${e.message}`);
+                            }
+                            launchFFmpeg();
+                        }, 0);
                     }
-                }
-            });
-
-            ffmpeg.on('exit', (code, signal) => {
-                if (signal) {
-                    logFfmpeg(`[FFmpeg exited] with signal ${signal}`);
-                    logWarn(`${consoleLogTitle} FFmpeg was killed with signal ${signal}`);
                 } else {
-                    logFfmpeg(`[FFmpeg exited] with code ${code}`);
-                    if (code !== 0) {
-                        logWarn(`${consoleLogTitle} FFmpeg exited unexpectedly with code ${code}`);
-                    }
+                    lastTimestamp = totalSec;
+                    lastCheckTime = Date.now();
+                    staleCount = 0;
                 }
-
-                // Retry on device fail
-                if (audioErrorLogged) {
-                    logWarn(`${consoleLogTitle} Retrying in 10 seconds...`);
-                    setTimeout(() => {
-                        audioErrorLogged = false;
-                        launchFFmpeg();
-                    }, 10000);
-                }
-            });
-        }
-        launchFFmpeg(); // Initial launch
-    } else if (process.platform === 'darwin') {
-        // macOS (sox --> 3las.server.js --> FFmpeg)
-        const commandDef = buildCommand(ffmpegPath);
-
-        // Apply audio boost if enabled and FFmpeg is used
-        if (serverConfig.audio.audioBoost && serverConfig.audio.ffmpeg) {
-            commandDef.args.splice(commandDef.soxArgs.indexOf('pipe:1'), 0, '-af', 'volume=1.7');
-        }
-
-        let currentSox = null;
-
-        process.on('exit', () => {
-            if (currentSox) currentSox.kill('SIGINT');
-        });
-
-        process.on('SIGINT', () => {
-            if (currentSox) currentSox.kill('SIGINT');
-            process.exit();
-        });
-
-        function startSox() {
-            if (!serverConfig.audio.ffmpeg) {
-                // Spawn sox
-                logDebug(`${consoleLogTitle} Launching sox with args: ${commandDef.soxArgs.join(' ')}`);
-
-                const sox = spawn('sox', commandDef.soxArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
-                currentSox = sox;
-
-                audioServer.waitUntilReady.then(() => {
-                    audioServer.Server.StdIn = sox.stdout;
-                    audioServer.Server.Run();
-                    connectMessage(`${consoleLogTitle} Connected SoX \u2192 FFmpeg \u2192 Server.StdIn${serverConfig.audio.audioBoost && serverConfig.audio.ffmpeg ? ' (audio boost)' : ''}`);
-                });
-
-                sox.stderr.on('data', (data) => {
-                    logFfmpeg(`[sox stderr]: ${data}`);
-                });
-
-                sox.on('exit', (code) => {
-                    logFfmpeg(`[sox exited] with code ${code}`);
-                    if (code !== 0) {
-                        setTimeout(startSox, 2000);
-                    }
-                });
             }
-        }
-
-        startSox();
-
-        if (serverConfig.audio.ffmpeg) {
-            logDebug(`${consoleLogTitle} Launching FFmpeg with args: ${commandDef.args.join(' ')}`);
-            const ffmpeg = spawn(ffmpegPath, commandDef.args, { stdio: ['ignore', 'pipe', 'pipe'] });
-
-            // Pipe FFmpeg output to 3las.server.js
-            audioServer.waitUntilReady.then(() => {
-                audioServer.Server.StdIn = ffmpeg.stdout;
-                audioServer.Server.Run();
-                connectMessage(`${consoleLogTitle} Connected FFmpeg stdout \u2192 Server.StdIn${serverConfig.audio.audioBoost ? ' (audio boost)' : ''}`);
-            });
-
-            process.on('SIGINT', () => {
-                ffmpeg.kill('SIGINT');
-                process.exit();
-            });
-
-            process.on('exit', () => {
-                ffmpeg.kill('SIGINT');
-            });
-
-            // FFmpeg stderr handling
-            ffmpeg.stderr.on('data', (data) => {
-                logFfmpeg(`[FFmpeg stderr]: ${data}`);
-            });
-
-            // FFmpeg exit handling
-            ffmpeg.on('exit', (code) => {
-                logFfmpeg(`[FFmpeg exited] with code ${code}`);
-                if (code !== 0) {
-                    logWarn(`${consoleLogTitle} FFmpeg exited unexpectedly with code ${code}`);
-                }
-            });
-        }
-    } else {
-        // Linux (arecord --> 3las.server.js --> FFmpeg)
-        const commandDef = buildCommand(ffmpegPath);
-
-        // Apply audio boost if enabled and FFmpeg is used
-        if (serverConfig.audio.audioBoost && serverConfig.audio.ffmpeg) {
-            commandDef.args.splice(commandDef.args.indexOf('pipe:1'), 0, '-af', 'volume=1.7');
-        }
-
-        let currentArecord = null;
-
-        process.on('exit', () => {
-            if (currentArecord) currentArecord.kill('SIGINT');
         });
 
-        process.on('SIGINT', () => {
-            if (currentArecord) currentArecord.kill('SIGINT');
-            process.exit();
-        });
-
-        function startArecord() {
-            if (!serverConfig.audio.ffmpeg) {
-                // Spawn the arecord loop
-                logDebug(`${consoleLogTitle} Launching arecord with args: ${commandDef.arecordArgs.join(' ')}`);
-
-                //const arecord = spawn(commandDef.command, { shell: true, stdio: ['ignore', 'pipe', 'pipe'] });
-                const arecord = spawn('arecord', commandDef.arecordArgs, { stdio: ['ignore', 'pipe', 'pipe'] });
-                currentArecord = arecord;
-
-                audioServer.waitUntilReady.then(() => {
-                    audioServer.Server.StdIn = arecord.stdout;
-                    audioServer.Server.Run();
-                    connectMessage(`${consoleLogTitle} Connected arecord \u2192 FFmpeg \u2192 Server.StdIn${serverConfig.audio.audioBoost && serverConfig.audio.ffmpeg ? ' (audio boost)' : ''}`);
-                });
-
-                arecord.stderr.on('data', (data) => {
-                    logFfmpeg(`[arecord stderr]: ${data}`);
-                });
-
-                arecord.on('exit', (code) => {
-                    logFfmpeg(`[arecord exited] with code ${code}`);
-                    if (code !== 0) {
-                        setTimeout(startArecord, 2000);
-                    }
-                });
+        ffmpeg.on('exit', (code, signal) => {
+            if (signal) {
+                logWarn(`${consoleLogTitle} FFmpeg killed with signal ${signal}`);
+            } else if (code !== 0) {
+                logWarn(`${consoleLogTitle} FFmpeg exited with code ${code}`);
             }
-        }
 
-        startArecord();
-
-        if (serverConfig.audio.ffmpeg) {
-            logDebug(`${consoleLogTitle} Launching FFmpeg with args: ${commandDef.args.join(' ')}`);
-            const ffmpeg = spawn(ffmpegPath, commandDef.args, { stdio: ['ignore', 'pipe', 'pipe'] });
-
-            // Pipe FFmpeg output to 3las.server.js
-            audioServer.waitUntilReady.then(() => {
-                audioServer.Server.StdIn = ffmpeg.stdout;
-                audioServer.Server.Run();
-                connectMessage(`${consoleLogTitle} Connected FFmpeg stdout \u2192 Server.StdIn${serverConfig.audio.audioBoost ? ' (audio boost)' : ''}`);
-            });
-
-            process.on('SIGINT', () => {
-                ffmpeg.kill('SIGINT');
-                process.exit();
-            });
-
-            process.on('exit', () => {
-                ffmpeg.kill('SIGINT');
-            });
-
-            // FFmpeg stderr handling
-            ffmpeg.stderr.on('data', (data) => {
-                logFfmpeg(`[FFmpeg stderr]: ${data}`);
-            });
-
-            // FFmpeg exit handling
-            ffmpeg.on('exit', (code) => {
-                logFfmpeg(`[FFmpeg exited] with code ${code}`);
-                if (code !== 0) {
-                    logWarn(`${consoleLogTitle} FFmpeg exited unexpectedly with code ${code}`);
-                }
-            });
-        }
+            logWarn(`${consoleLogTitle} Restarting FFmpeg in 5 seconds...`);
+            setTimeout(launchFFmpeg, 5000);
+        });
     }
+
+    process.on('SIGINT', () => {
+        if (ffmpeg) ffmpeg.kill('SIGINT');
+        process.exit();
+    });
+
+    process.on('exit', () => {
+        if (ffmpeg) ffmpeg.kill('SIGINT');
+    });
+
+    launchFFmpeg();
+
 }).catch((err) => {
     logError(`${consoleLogTitle} Error: ${err.message}`);
 });
+
+module.exports.audio_pipe = audio_pipe;
