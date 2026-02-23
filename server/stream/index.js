@@ -22,7 +22,7 @@ checkFFmpeg().then((ffmpegPath) => {
     logInfo(`${consoleLogTitle} Starting audio stream on device: \x1b[35m${serverConfig.audio.audioDevice}\x1b[0m`);
 
     const sampleRate =
-        Number(this?.Server?.SampleRate || serverConfig.audio.sampleRate || 48000) +
+        Number(this?.Server?.SampleRate || serverConfig.audio.sampleRate || 44100) +
         Number(serverConfig.audio.samplerateOffset || 0);
 
     const channels =
