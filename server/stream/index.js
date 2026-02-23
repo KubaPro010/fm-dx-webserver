@@ -48,6 +48,7 @@ checkFFmpeg().then((ffmpegPath) => {
 
             ...inputArgs,
 
+            "-thread_queue_size", "1024",
             "-ar", String(sampleRate),
             "-ac", String(channels),
 
