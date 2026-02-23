@@ -1,5 +1,5 @@
 /* Libraries / Imports */
-const { RDSDecoder } = require("./rds.js");
+const RDSDecoder = require("./rds.js");
 const { serverConfig } = require('./server_config');
 
 const { fetchTx } = require('./tx_search.js');
