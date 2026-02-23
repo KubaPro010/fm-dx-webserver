@@ -25,9 +25,7 @@ async function connect() {
       
       try {
         const res = await fetch('https://fmtuner.org/binaries/' + frpcFileName);
-        if (res.status === 404) {
-          throw new Error('404 error');
-        }
+        if (res.status === 404) throw new Error('404 error');
         const stream = fs2.createWriteStream(frpcPath);
         await finished(Readable.fromWeb(res.body).pipe(stream));
       } catch (err) {
@@ -41,7 +39,7 @@ async function connect() {
     }
     const cfg = ejs.render(frpcConfigTemplate, {
       cfg: serverConfig.tunnel,
-      host: serverConfig.tunnel.community.enabled ? serverConfig.tunnel.community.host : serverConfig.tunnel.region + ".fmtuner.org",
+      host: serverConfig.tunnel.community.enabled ? serverConfig.tunnel.community.host : ((serverConfig.tunnel.region == "pldx") ? "pldx.duckdns.org" : (serverConfig.tunnel.region + ".fmtuner.org")),
       server: {
         port: serverConfig.webserver.webserverPort
       }
@@ -62,15 +60,10 @@ async function connect() {
       if (line.includes('connect to server error')) {
         const reason = line.substring(line.indexOf(': ')+2);
         logError('Failed to connect to tunnel, reason: ' + reason);
-      } else if (line.includes('invalid user or token')) {
-        logError('Failed to connect to tunnel, reason: invalid user or token');
-      } else if (line.includes('start proxy success')) {
-        logInfo('Tunnel established successfully');
-      } else if (line.includes('login to server success')) {
-        logInfo('Connection to tunnel server was successful');
-      } else {
-        logDebug('Tunnel log:', line);
-      }
+      } else if (line.includes('invalid user or token')) logError('Failed to connect to tunnel, reason: invalid user or token');
+      else if (line.includes('start proxy success')) logInfo('Tunnel established successfully');
+      else if (line.includes('login to server success')) logInfo('Connection to tunnel server was successful');
+      else logDebug('Tunnel log:', line);
     });
   
     child.on('error', (err) => {

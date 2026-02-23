@@ -137,9 +137,7 @@ function processConnection(clientIp, locationInfo, currentUsers, ws, callback) {
   const normalizedClientIp = clientIp?.replace(/^::ffff:/, '');
 
   fetchBannedAS((error, bannedAS) => {
-    if (error) {
-      console.error("Error fetching banned AS list:", error);
-    }
+    if (error) console.error("Error fetching banned AS list:", error);
 
     if (bannedAS.some((as) => locationInfo.as?.includes(as))) {
       const now = Date.now();
@@ -165,9 +163,7 @@ function processConnection(clientIp, locationInfo, currentUsers, ws, callback) {
       instance: ws,
     });
 
-    consoleCmd.logInfo(
-      `Web client \x1b[32mconnected\x1b[0m (${normalizedClientIp}) \x1b[90m[${currentUsers}]\x1b[0m Location: ${userLocation}`
-    );
+    consoleCmd.logInfo(`Web client \x1b[32mconnected\x1b[0m (${normalizedClientIp}) \x1b[90m[${currentUsers}]\x1b[0m Location: ${userLocation}`);
 
     callback("User allowed");
   });
@@ -200,13 +196,9 @@ function resolveDataBuffer(data, wss, rdsWss) {
       incompleteDataBuffer = receivedData.slice(position + 1);
       receivedData = receivedData.slice(0, position + 1);
     }
-  } else {
-    incompleteDataBuffer = '';
-  }
+  } else incompleteDataBuffer = '';
   
-  if (receivedData.length) {
-        dataHandler.handleData(wss, receivedData, rdsWss);
-    };
+  if (receivedData.length) dataHandler.handleData(wss, receivedData, rdsWss);
 }
 
 function kickClient(ipAddress) {
@@ -221,9 +213,7 @@ function kickClient(ipAddress) {
       targetClient.instance.close();
       consoleCmd.logInfo(`Web client kicked (${ipAddress})`);
     }, 500);
-  } else {
-    consoleCmd.logInfo(`Kicking client ${ipAddress} failed. No suitable client found.`);
-  }
+  } else consoleCmd.logInfo(`Kicking client ${ipAddress} failed. No suitable client found.`);
 }
 
 function checkIPv6Support(callback) {
@@ -232,11 +222,8 @@ function checkIPv6Support(callback) {
   server.listen(0, '::1', () => {
     server.close(() => callback(true));
   }).on('error', (error) => {
-    if (error.code === 'EADDRNOTAVAIL') {
-      callback(false);
-    } else {
-      callback(false);
-    }
+    if (error.code === 'EADDRNOTAVAIL') callback(false);
+    else callback(false);
   });
 }
 
@@ -272,9 +259,7 @@ function antispamProtection(message, clientIp, ws, userCommands, lastWarn, userC
   if (endpointName === 'text') consoleCmd.logDebug(`Command received from \x1b[90m${clientIp}\x1b[0m: ${command}`);
 
   // Initialize user command history if not present
-  if (!userCommandHistory[clientIp]) {
-      userCommandHistory[clientIp] = [];
-  }
+  if (!userCommandHistory[clientIp]) userCommandHistory[clientIp] = [];
   
   // Record the current timestamp for the user
   userCommandHistory[clientIp].push(now);

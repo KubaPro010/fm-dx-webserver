@@ -463,6 +463,7 @@ router.get('/tunnelservers', async (req, res) => {
       { value: "eu", host: "eu.fmtuner.org", label: "Europe" },
       { value: "us", host: "us.fmtuner.org", label: "Americas" },
       { value: "sg", host: "sg.fmtuner.org", label: "Asia & Oceania" },
+      { value: "pldx", host: "pldx.fmtuner.org", label: "Poland (k201)" },
     ];
   
     const results = await Promise.all(

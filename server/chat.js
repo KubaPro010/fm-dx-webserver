@@ -23,10 +23,7 @@ function createChatServer(storage) {
         storage.chatHistory.forEach((message) => {
             const historyMessage = { ...message, history: true };
 
-            if (!request.session?.isAdminAuthenticated) {
-                delete historyMessage.ip;
-            }
-
+            if (!request.session?.isAdminAuthenticated) delete historyMessage.ip;
             ws.send(JSON.stringify(historyMessage));
         });
 

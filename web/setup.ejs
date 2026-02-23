@@ -699,7 +699,8 @@
                 <div class="panel-100 p-bottom-20">
                     <h3>Tunnel</h3>
                     <p>When you become an <a href="https://buymeacoffee.com/fmdx" target="_blank"><strong>FMDX.org supporter</strong></a>, you can host your webserver without the need of a public IP address & port forwarding.<br>
-                    When you become a supporter, you can message the Founders on Discord for your login details.</p>
+                    When you become a supporter, you can message the Founders on Discord for your login details.</p><br>
+                    <p>You can also get an tunnel from kuba201 discord, one of the contributors of this version of the application.</p>
                     <h4>Main tunnel settings</h4>
                     <%- include('_components', {component: 'checkbox', cssClass: 'm-right-10', label: 'Enable tunnel', id: 'tunnel-enabled'}) %><br>
                     <%- include('_components', { component: 'dropdown', id: 'tunnel-server', inputId: 'tunnel-serverSelect', label: 'Official server region', cssClass: '', placeholder: 'Europe', 
@@ -707,6 +708,7 @@
                         { value: 'eu', label: 'Europe' },
                         { value: 'us', label: 'Americas' },
                         { value: 'sg', label: 'Asia & Oceania' },
+                        { value: 'pldx', label: 'Poland (k201)' },
                     ]
                     }) %>
                     <%- include('_components', {component: 'text', cssClass: 'w-150 br-15', placeholder: '', label: 'Username', id: 'tunnel-username'}) %>

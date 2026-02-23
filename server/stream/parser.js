@@ -74,9 +74,7 @@ function parseAudioDevice(options, callback) {
                         if (platform === 'win32' && line.search(/Alternative\sname/) > -1) {
                             const lastDevice = deviceList[deviceList.length - 1];
                             const alt = line.match(alternativeName);
-                            if (lastDevice && alt) {
-                                lastDevice.alternativeName = alt[1];
-                            }
+                            if (lastDevice && alt) lastDevice.alternativeName = alt[1];
                             return;
                         }
 
@@ -107,11 +105,8 @@ function parseAudioDevice(options, callback) {
         }
     };
 
-    if (callbackExists) {
-        execute();
-    } else {
-        return new Promise(execute);
-    }
+    if (callbackExists) execute();
+    else return new Promise(execute);
 }
 
 module.exports = { parseAudioDevice };

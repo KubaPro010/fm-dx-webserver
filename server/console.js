@@ -39,9 +39,7 @@ const logMessage = (type, messages, verbose = false) => {
         console.log(logMessage);
     }
 
-    if(type !== 'FFMPEG') {
-        appendLogToBuffer(logMessage);
-    }
+    if(type !== 'FFMPEG') appendLogToBuffer(logMessage);
 };
 
 const logDebug = (...messages) => logMessage('DEBUG', messages, verboseMode);

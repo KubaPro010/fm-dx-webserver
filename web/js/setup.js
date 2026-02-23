@@ -116,11 +116,8 @@ function initBanlist() {
         data: { ip: ipAddress, reason: reason },
         success: function(response) {
             // Refresh the page if the request was successful
-            if (response.success) {
-                location.reload();
-            } else {
-                console.error('Failed to add to banlist');
-            }
+            if (response.success) location.reload();
+            else console.error('Failed to add to banlist');
         },
         error: function() {
             console.error('Error occurred during the request');

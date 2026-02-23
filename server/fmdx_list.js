@@ -1,8 +1,7 @@
 /* Libraries / Imports */
-const fs = require('fs');
 const fetch = require('node-fetch');
-const { logDebug, logError, logInfo, logWarn } = require('./console');
-const { serverConfig, configUpdate, configSave } = require('./server_config');
+const { logDebug, logInfo, logWarn } = require('./console');
+const { serverConfig, configSave } = require('./server_config');
 var pjson = require('../package.json');
 var os = require('os');
 
@@ -23,23 +22,15 @@ function send(request) {
   fetch(url, options)
     .then(response => response.json())
     .then(data => {
-        if (data.success && data.token)
-        {
+        if (data.success && data.token) {
           if (!serverConfig.identification.token)
           {
             logInfo("Registered to FM-DX Server Map successfully.");
             serverConfig.identification.token = data.token;
             configSave();
           }
-          else
-          {
-            logDebug("FM-DX Server Map update successful.");
-          }
-        }
-        else
-        {
-          logWarn("Failed to update FM-DX Server Map: " + (data.error ? data.error : 'unknown error'));
-        }
+          else logDebug("FM-DX Server Map update successful.");
+        } else logWarn("Failed to update FM-DX Server Map: " + (data.error ? data.error : 'unknown error'));
     })
     .catch(error => {
         logWarn("Failed to update FM-DX Server Map: " + error);
@@ -47,10 +38,7 @@ function send(request) {
 }
 
 function sendKeepalive() {
-  if (!serverConfig.identification.token)
-  {
-    return;
-  }
+  if (!serverConfig.identification.token) return;
 
   const request = {
     token: serverConfig.identification.token,
@@ -64,9 +52,7 @@ function sendUpdate() {
   let currentOs = os.type() + ' ' + os.release();
 
   let bwLimit = '';
-  if (serverConfig.webserver.tuningLimit === true) {
-    bwLimit = serverConfig.webserver.tuningLowerLimit + ' - ' + serverConfig.webserver.tuningUpperLimit + ' MHz';
-  }
+  if (serverConfig.webserver.tuningLimit === true) bwLimit = serverConfig.webserver.tuningLowerLimit + ' - ' + serverConfig.webserver.tuningUpperLimit + ' MHz';
 
   const request = {
     status: ((serverConfig.lockToAdmin == 'true' || serverConfig.publicTuner == 'false') ? 2 : 1),
@@ -82,37 +68,20 @@ function sendUpdate() {
     version: pjson.version 
   };
 
-  if (serverConfig.identification.token)
-  {
-    request.token = serverConfig.identification.token;
-  }
+  if (serverConfig.identification.token) request.token = serverConfig.identification.token;
 
-  if (serverConfig.identification.proxyIp.length)
-  {
-    request.url = serverConfig.identification.proxyIp;
-  }
-  else
-  {
-    request.port = serverConfig.webserver.webserverPort;
-  }
+  if (serverConfig.identification.proxyIp.length) request.url = serverConfig.identification.proxyIp;
+  else request.port = serverConfig.webserver.webserverPort;
 
   send(request);
 }
 
 function update() {
-  if (timeoutID !== null) {
-      clearTimeout(timeoutID);
-  }
-
-  if (!serverConfig.identification.broadcastTuner)
-  {
-    return;
-  }
+  if (timeoutID !== null) clearTimeout(timeoutID);
+  if (!serverConfig.identification.broadcastTuner) return;
 
   sendUpdate();
   timeoutID = setInterval(sendKeepalive, 5 * 60 * 1000);
 }
 
-module.exports = {
-    update
-};
+module.exports.update = update;

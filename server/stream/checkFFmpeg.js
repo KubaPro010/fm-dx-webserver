@@ -11,11 +11,8 @@ function checkFFmpeg() {
     });
 
     checkFFmpegProcess.on('exit', (code) => {
-      if (code === 0) {
-        resolve('ffmpeg');
-      } else {
-        resolve(require('ffmpeg-static'));
-      }
+      if (code === 0) resolve('ffmpeg');
+      else resolve(require('ffmpeg-static'));
     });
   });
 }
