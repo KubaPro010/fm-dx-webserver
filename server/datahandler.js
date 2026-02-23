@@ -46,7 +46,7 @@ var dataToSend = {
   users: 0,
 };
 
-const rdsdec = RDSDecoder(dataToSend);
+const rdsdec = new RDSDecoder(dataToSend);
 
 const filterMappings = {
   'G11': { eq: 1, ims: 1 },
