@@ -1,4 +1,3 @@
-// Library imports
 const express = require('express');
 const endpoints = require('./endpoints');
 const session = require('express-session');
@@ -8,21 +7,16 @@ const readline = require('readline');
 const app = express();
 const httpServer = http.createServer(app);
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ noServer: true, perMessageDeflate: true });
-const rdsWss = new WebSocket.Server({ noServer: true });
-const pluginsWss = new WebSocket.Server({ noServer: true, perMessageDeflate: true });
-const fs = require('fs');
 const path = require('path');
 const net = require('net');
-const client = new net.Socket();
 const { SerialPort } = require('serialport');
 const tunnel = require('./tunnel');
 const { createChatServer } = require('./chat');
-const { createAudioServer } = require('./stream/ws.js');
 const figlet = require('figlet');
 
-// File imports
 const helpers = require('./helpers');
+const { findServerFiles, startPluginsWithDelay } = helpers;
+
 const dataHandler = require('./datahandler');
 const fmdxList = require('./fmdx_list');
 const { logError, logInfo, logWarn } = require('./console');
@@ -31,35 +25,10 @@ const { serverConfig, configExists } = require('./server_config');
 const pluginsApi = require('./plugins_api');
 const pjson = require('../package.json');
 
-// Function to find server files based on the plugins listed in config
-function findServerFiles(plugins) {
-  let results = [];
-  plugins.forEach(plugin => {
-    // Remove .js extension if present
-    if (plugin.endsWith('.js')) plugin = plugin.slice(0, -3);
-
-    const pluginPath = path.join(__dirname, '..', 'plugins', `${plugin}_server.js`);
-    if (fs.existsSync(pluginPath) && fs.statSync(pluginPath).isFile()) results.push(pluginPath);
-  });
-  return results;
-}
-
-// Start plugins with delay
-function startPluginsWithDelay(plugins, delay) {
-  plugins.forEach((pluginPath, index) => {
-    setTimeout(() => {
-      const pluginName = path.basename(pluginPath, '.js'); // Extract plugin name from path
-      logInfo(`-----------------------------------------------------------------`);
-      logInfo(`Plugin ${pluginName} loaded successfully!`);
-      require(pluginPath);
-    }, delay * index);
-  });
-
-  // Add final log line after all plugins are loaded
-  setTimeout(() => {
-    logInfo(`-----------------------------------------------------------------`);
-  }, delay * plugins.length);
-}
+const client = new net.Socket();
+const wss = new WebSocket.Server({ noServer: true, perMessageDeflate: true });
+const rdsWss = new WebSocket.Server({ noServer: true });
+const pluginsWss = new WebSocket.Server({ noServer: true, perMessageDeflate: true });
 
 // Get all plugins from config and find corresponding server files
 const plugins = findServerFiles(serverConfig.plugins);
@@ -76,22 +45,12 @@ const terminalWidth = readline.createInterface({
   output: process.stdout
 }).output.columns;
 
-
-figlet("FM-DX Webserver", function (err, data) {
-  if (err) {
-    console.log("Something went wrong...");
-    console.dir(err);
-    return;
-  }
-  console.log('\x1b[32m' + data);
-});
+console.log('\x1b[32m' + figlet.textSync("FM-DX Webserver"));
 console.log('\x1b[32m\x1b[2mby Noobish @ \x1b[4mFMDX.org\x1b[0m');
 console.log("v" + pjson.version)
 console.log('\x1b[90m' + '─'.repeat(terminalWidth - 1) + '\x1b[0m');
 
-const chatWss = createChatServer(storage);
-const audioWss = createAudioServer();
-// Start ffmpeg
+const audioWss = require('./stream/ws.js');
 require('./stream/index');
 require('./plugins');
 
@@ -107,6 +66,7 @@ const sessionMiddleware = session({
 });
 app.use(sessionMiddleware);
 app.use(bodyParser.json());
+const chatWss = createChatServer(storage);
 
 connectToXdrd();
 connectToSerial();
@@ -237,9 +197,7 @@ client.on('data', (data) => {
   const { xdrd } = serverConfig;
 
   helpers.resolveDataBuffer(data, wss, rdsWss);
-  if (authFlags.authMsg == true && authFlags.messageCount > 1) {
-    return;
-  }
+  if (authFlags.authMsg == true && authFlags.messageCount > 1) return;
 
   authFlags.messageCount++;
   const receivedData = data.toString();
@@ -346,7 +304,7 @@ wss.on('connection', (ws, request) => {
     let clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress;
     const userCommandHistory = {};
     const normalizedClientIp = clientIp?.replace(/^::ffff:/, '');
-
+  
     if (clientIp && serverConfig.webserver.banlist?.includes(clientIp)) {
         ws.close(1008, 'Banned IP');
         return;

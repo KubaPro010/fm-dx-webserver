@@ -93,6 +93,4 @@ function createLinks() {
 const allPluginConfigs = collectPluginConfigs();
 createLinks();
 
-module.exports = {
-    allPluginConfigs
-};
+module.exports = allPluginConfigs;

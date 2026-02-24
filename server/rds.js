@@ -93,8 +93,8 @@ class RDSDecoder {
 
         this.ps[idx * 2] = String.fromCharCode(blockD >> 8);
         this.ps[idx * 2 + 1] = String.fromCharCode(blockD & 0xFF);
-        this.ps_errors[idx * 2] = error;
-        this.ps_errors[idx * 2 + 1] = error;
+        this.ps_errors[idx * 2] = Math.ceil(d_error * (10/3));
+        this.ps_errors[idx * 2 + 1] = Math.ceil(d_error * (10/3));
 
         this.data.ps = this.ps.join('');
         this.data.ps_errors = this.ps_errors.join(',');
@@ -124,15 +124,15 @@ class RDSDecoder {
             if(c_error < 2 && multiplier !== 2) {
                 this.rt1[idx * multiplier] = String.fromCharCode(blockC >> 8);
                 this.rt1[idx * multiplier + 1] = String.fromCharCode(blockC & 0xFF);
-                this.rt1_errors[idx * multiplier] = error;
-                this.rt1_errors[idx * multiplier + 1] = error;
+                this.rt1_errors[idx * multiplier] = Math.ceil(c_error * (10/3));
+                this.rt1_errors[idx * multiplier + 1] = Math.ceil(c_error * (10/3));
             }
             if(d_error < 2) {
                 var offset = (multiplier == 2) ? 0 : 2;
                 this.rt1[idx * multiplier + offset] = String.fromCharCode(blockD >> 8);
                 this.rt1[idx * multiplier + offset + 1] = String.fromCharCode(blockD & 0xFF);
-                this.rt1_errors[idx * multiplier + offset] = error;
-                this.rt1_errors[idx * multiplier + offset + 1] = error;
+                this.rt1_errors[idx * multiplier + offset] = Math.ceil(d_error * (10/3));
+                this.rt1_errors[idx * multiplier + offset + 1] = Math.ceil(d_error * (10/3));
             }
 
             var i = this.rt1.indexOf("\r")
@@ -155,15 +155,15 @@ class RDSDecoder {
             if(c_error !== 3 && multiplier !== 2) {
                 this.rt0[idx * multiplier] = String.fromCharCode(blockC >> 8);
                 this.rt0[idx * multiplier + 1] = String.fromCharCode(blockC & 0xFF);
-                this.rt0_errors[idx * multiplier] = error;
-                this.rt0_errors[idx * multiplier + 1] = error;
+                this.rt0_errors[idx * multiplier] = Math.ceil(c_error * (10/3));
+                this.rt0_errors[idx * multiplier + 1] = Math.ceil(c_error * (10/3));
             }
             if(d_error !== 3) {
                 var offset = (multiplier == 2) ? 0 : 2;
                 this.rt0[idx * multiplier + offset] = String.fromCharCode(blockD >> 8);
                 this.rt0[idx * multiplier + offset + 1] = String.fromCharCode(blockD & 0xFF);
-                this.rt0_errors[idx * multiplier + offset] = error;
-                this.rt0_errors[idx * multiplier + offset + 1] = error;
+                this.rt0_errors[idx * multiplier + offset] = Math.ceil(d_error * (10/3));
+                this.rt0_errors[idx * multiplier + offset + 1] = Math.ceil(d_error * (10/3));
             }
 
             var i = this.rt0.indexOf("\r");

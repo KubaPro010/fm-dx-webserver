@@ -2,7 +2,7 @@
 const RDSDecoder = require("./rds.js");
 const { serverConfig } = require('./server_config');
 
-const { fetchTx } = require('./tx_search.js');
+const fetchTx = require('./tx_search.js');
 const updateInterval = 75;
 
 // Initialize the data object

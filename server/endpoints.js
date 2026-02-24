@@ -15,7 +15,7 @@ const tunerProfiles = require('./tuner_profiles');
 const { logInfo, logs } = require('./console');
 const dataHandler = require('./datahandler');
 const fmdxList = require('./fmdx_list');
-const { allPluginConfigs } = require('./plugins');
+const allPluginConfigs = require('./plugins');
 
 // Endpoints
 router.get('/', (req, res) => {

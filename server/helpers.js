@@ -1,3 +1,4 @@
+const fs = require('fs');
 const http = require('http');
 const https = require('https');
 const net = require('net');
@@ -5,7 +6,7 @@ const crypto = require('crypto');
 const dataHandler = require('./datahandler');
 const storage = require('./storage');
 const consoleCmd = require('./console');
-const { serverConfig, configExists, configSave } = require('./server_config');
+const { serverConfig, configSave } = require('./server_config');
 
 function parseMarkdown(parsed) {
   parsed = parsed.replace(/<\/?[^>]+(>|$)/g, '');
@@ -93,9 +94,7 @@ let bannedASCache = { data: null, timestamp: 0 };
 
 function fetchBannedAS(callback) {
   const now = Date.now();
-  if (bannedASCache.data && now - bannedASCache.timestamp < 10 * 60 * 1000) {
-    return callback(null, bannedASCache.data);
-  }
+  if (bannedASCache.data && now - bannedASCache.timestamp < 10 * 60 * 1000) return callback(null, bannedASCache.data);
 
   const req = https.get("https://fmdx.org/banned_as.json", { family: 4 }, (banResponse) => {
     let banData = "";
@@ -152,9 +151,7 @@ function processConnection(clientIp, locationInfo, currentUsers, ws, callback) {
     }
 
     const userLocation =
-      locationInfo.country === undefined
-        ? "Unknown"
-        : `${locationInfo.city}, ${locationInfo.regionName}, ${locationInfo.countryCode}`;
+      locationInfo.country === undefined ? "Unknown" : `${locationInfo.city}, ${locationInfo.regionName}, ${locationInfo.countryCode}`;
 
     storage.connectedUsers.push({
       ip: clientIp,
@@ -269,7 +266,7 @@ function antispamProtection(message, clientIp, ws, userCommands, lastWarn, userC
 
   // Check if there are 8 or more commands in the last 20 ms
   if (userCommandHistory[clientIp].length >= 8) {
-      consoleCmd.logWarn(`User \x1b[90m${clientIp}\x1b[0m is spamming with rapid commands. Connection will be terminated and user will be banned.`);
+    consoleCmd.logWarn(`User \x1b[90m${clientIp}\x1b[0m is spamming with rapid commands. Connection will be terminated and user will be banned.`);
 
     // Check if the normalized IP is already in the banlist
     const isAlreadyBanned = serverConfig.webserver.banlist.some(banEntry => banEntry[0] === normalizedClientIp);
@@ -281,17 +278,15 @@ function antispamProtection(message, clientIp, ws, userCommands, lastWarn, userC
         configSave();
     }
 
-      ws.close(1008, 'Bot-like behavior detected');
-      return command; // Return command value before closing connection
+    ws.close(1008, 'Bot-like behavior detected');
+    return command; // Return command value before closing connection
   }
 
   // Update the last message time for general spam detection
   lastMessageTime = now;
 
   // Initialize command history for rate-limiting checks
-  if (!userCommands[command]) {
-      userCommands[command] = [];
-  }
+  if (!userCommands[command]) userCommands[command] = [];
 
   // Record the current timestamp for this command
   userCommands[command].push(now);
@@ -313,15 +308,45 @@ function antispamProtection(message, clientIp, ws, userCommands, lastWarn, userC
 }
 
 const escapeHtml = (unsafe) => {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return unsafe.replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 };
 
+// Start plugins with delay
+function startPluginsWithDelay(plugins, delay) {
+  plugins.forEach((pluginPath, index) => {
+    setTimeout(() => {
+      const pluginName = path.basename(pluginPath, '.js'); // Extract plugin name from path
+      logInfo(`-----------------------------------------------------------------`);
+      logInfo(`Plugin ${pluginName} loaded successfully!`);
+      require(pluginPath);
+    }, delay * index);
+  });
+
+  // Add final log line after all plugins are loaded
+  setTimeout(() => {
+    logInfo(`-----------------------------------------------------------------`);
+  }, delay * plugins.length);
+}
+
+// Function to find server files based on the plugins listed in config
+function findServerFiles(plugins) {
+  let results = [];
+  plugins.forEach(plugin => {
+    // Remove .js extension if present
+    if (plugin.endsWith('.js')) plugin = plugin.slice(0, -3);
+
+    const pluginPath = path.join(__dirname, '..', 'plugins', `${plugin}_server.js`);
+    if (fs.existsSync(pluginPath) && fs.statSync(pluginPath).isFile()) results.push(pluginPath);
+  });
+  return results;
+}
 
 module.exports = {
-  authenticateWithXdrd, parseMarkdown, handleConnect, removeMarkdown, formatUptime, resolveDataBuffer, kickClient, checkIPv6Support, checkLatency, antispamProtection, escapeHtml
+  authenticateWithXdrd, parseMarkdown, handleConnect,
+  removeMarkdown, formatUptime, resolveDataBuffer,
+  kickClient, checkIPv6Support, checkLatency,
+  antispamProtection, escapeHtml, findServerFiles,
+  startPluginsWithDelay
 }

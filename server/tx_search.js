@@ -80,9 +80,7 @@ async function buildTxDatabase() {
                 consoleCmd.logInfo('Fetching transmitter database...');
                 const response = await fetch(`https://maps.fmdx.org/api?qth=${serverConfig.identification.lat},${serverConfig.identification.lon}`, {
                     method: 'GET',
-                    headers: {
-                        'Accept': 'application/json'
-                    }
+                    headers: {'Accept': 'application/json'}
                 });
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 localDb = await response.json();
@@ -169,9 +167,7 @@ function getStateForCoordinates(lat, lon) {
 
     for (const feature of usStatesGeoJson.features) {
         const boundingBox = getStateBoundingBox(feature.geometry.coordinates);
-        if (isCityInState(lat, lon, boundingBox)) {
-            return feature.properties.name;  // Return the state's name if city is inside bounding box
-        }
+        if (isCityInState(lat, lon, boundingBox)) return feature.properties.name;  // Return the state's name if city is inside bounding box
     }
     return null;
 }
@@ -208,22 +204,16 @@ function validPsCompare(rdsPs, stationPs) {
         for (let i = 0; i < standardizedRdsPs.length; i++) {
             // Skip this position if the character in standardizedRdsPs is an underscore.
             if (standardizedRdsPs[i] === '_') continue;
-            if (token[i] === standardizedRdsPs[i]) {
-                matchCount++;
-            }
+            if (token[i] === standardizedRdsPs[i]) matchCount++;
         }
-        if (matchCount >= minMatchLen) {
-            return true;
-        }
+        if (matchCount >= minMatchLen) return true;
     }
     return false;
 }
 
 function evaluateStation(station, esMode) {
     let weightDistance = station.distanceKm;
-    if (esMode && station.distanceKm > 700) {
-        weightDistance = Math.abs(station.distanceKm - 1500) + 200;
-    }
+    if (esMode && station.distanceKm > 700) weightDistance = Math.abs(station.distanceKm - 1500) + 200;
     let erp = station.erp && station.erp > 0 ? station.erp : 1;
     let extraWeight = erp > weightedErp && station.distanceKm <= weightDistance ? 0.3 : 0;
     let score = 0;
@@ -394,6 +384,4 @@ function deg2rad(deg) {
     return deg * (Math.PI / 180);
 }
 
-module.exports = {
-    fetchTx
-};
+module.exports = fetchTx;

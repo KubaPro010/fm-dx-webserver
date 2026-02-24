@@ -63,17 +63,12 @@ function createChatServer(storage) {
             delete messageData.ip;
             delete messageData.time;
 
-            if (messageData.nickname != null) {
-                messageData.nickname = helpers.escapeHtml(String(messageData.nickname));
-            }
+            if (messageData.nickname != null) messageData.nickname = helpers.escapeHtml(String(messageData.nickname));
 
             messageData.ip = clientIp;
 
             const now = new Date();
-            messageData.time =
-                String(now.getHours()).padStart(2, '0') +
-                ":" +
-                String(now.getMinutes()).padStart(2, '0');
+            messageData.time = String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0');
 
             if (serverConfig.webserver.banlist?.includes(clientIp)) return;
 

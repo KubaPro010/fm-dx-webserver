@@ -21,7 +21,7 @@ checkFFmpeg().then((ffmpegPath) => {
     logInfo(`${consoleLogTitle} Using ${ffmpegPath === 'ffmpeg' ? 'system-installed FFmpeg' : 'ffmpeg-static'}`);
     logInfo(`${consoleLogTitle} Starting audio stream on device: \x1b[35m${serverConfig.audio.audioDevice}\x1b[0m`);
 
-    const sampleRate = Number(serverConfig.audio.sampleRate || 44100) + Number(serverConfig.audio.samplerateOffset || 0);
+    const sampleRate = Number(serverConfig.audio.sampleRate || 44100) + Number(serverConfig.audio.samplerateOffset || 0); // Maybe even do 32 khz, we do not need higher than 15 khz precision
 
     const channels = Number(serverConfig.audio.audioChannels || 2);
 
@@ -139,4 +139,4 @@ checkFFmpeg().then((ffmpegPath) => {
     logError(`${consoleLogTitle} Error: ${err.message}`);
 });
 
-module.exports.audio_pipe = audio_pipe;
+module.exports = audio_pipe;
