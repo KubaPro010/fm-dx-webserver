@@ -26,7 +26,7 @@ const pluginsApi = require('./plugins_api');
 const pjson = require('../package.json');
 
 const client = new net.Socket();
-const wss = new WebSocket.Server({ noServer: true, perMessageDeflate: true });
+const wss = new WebSocket.Server({ noServer: true });
 const rdsWss = new WebSocket.Server({ noServer: true });
 const pluginsWss = new WebSocket.Server({ noServer: true, perMessageDeflate: true });
 
@@ -46,7 +46,7 @@ const terminalWidth = readline.createInterface({
 }).output.columns;
 
 console.log('\x1b[32m' + figlet.textSync("FM-DX Webserver"));
-console.log('\x1b[32m\x1b[2mby Noobish @ \x1b[4mFMDX.org\x1b[0m');
+console.log('\x1b[32m\x1b[2mby Noobish @ \x1b[4mFMDX.org + KubaPro010\x1b[0m');
 console.log("v" + pjson.version)
 console.log('\x1b[90m' + '─'.repeat(terminalWidth - 1) + '\x1b[0m');
 
@@ -458,10 +458,10 @@ wss.on('connection', (ws, request) => {
       }
 
       if (tunerLockTracker.has(ws)) {
-          logInfo(`User who locked the tuner left. Unlocking the tuner.`);
-          output.write('wT0\n')
-          tunerLockTracker.delete(ws);
-          serverConfig.publicTuner = true;
+        logInfo(`User who locked the tuner left. Unlocking the tuner.`);
+        output.write('wT0\n')
+        tunerLockTracker.delete(ws);
+        serverConfig.publicTuner = true;
       }
 
       if (currentUsers === 0 && serverConfig.enableDefaultFreq === true &&

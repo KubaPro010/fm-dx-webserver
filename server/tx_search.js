@@ -182,7 +182,7 @@ function getStateForCoordinates(lat, lon) {
  */
 function validPsCompare(rdsPs, stationPs) {
     if (typeof stationPs !== 'string' || typeof rdsPs !== 'string') {
-        consoleCmd.logError(`Invalid TX values. stationPs: ${stationPs}, rdsPs: ${rdsPs}`);
+        consoleCmd.logDebug(`Invalid TX values. stationPs: ${stationPs}, rdsPs: ${rdsPs}`);
         return false;
     }
 
@@ -257,21 +257,21 @@ async function fetchTx(freq, piCode, rdsPs) {
         stations: [station]
     }));
 
-    if (filteredLocations.length > 1) {
-        const extraFilteredLocations = filteredLocations.map(locData => ({
-            ...locData,
-            stations: locData.stations.filter(station => (station.ps.toLowerCase() === rdsPs.replace(/ /g, '_').toLowerCase()))
-        })).filter(locData => locData.stations.length > 0);
-
-        if (extraFilteredLocations.length > 0) filteredLocations = extraFilteredLocations;
-    }
-
     // Only check PS if we have more than one match.
     if (filteredLocations.length > 1) {
         filteredLocations = filteredLocations.map(locData => ({
             ...locData,
             stations: locData.stations.filter(station => validPsCompare(rdsPs, station.ps))
         })).filter(locData => locData.stations.length > 0);
+    }
+
+    if (filteredLocations.length > 1) {
+        const extraFilteredLocations = filteredLocations.map(locData => ({
+            ...locData,
+            stations: locData.stations.filter(station => (station.ps?.toLowerCase() === rdsPs.replace(/ /g, '_').toLowerCase()))
+        })).filter(locData => locData.stations.length > 0);
+
+        if (extraFilteredLocations.length > 0) filteredLocations = extraFilteredLocations;
     }
   
     for (let loc of filteredLocations) {
