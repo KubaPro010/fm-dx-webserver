@@ -9,39 +9,39 @@ const { serverConfig, configExists, configSave } = require('./server_config');
 
 function parseMarkdown(parsed) {
   parsed = parsed.replace(/<\/?[^>]+(>|$)/g, '');
-  
+
   var grayTextRegex = /--(.*?)--/g;
   parsed = parsed.replace(grayTextRegex, '<span class="text-gray">$1</span>');
-  
+
   var boldRegex = /\*\*(.*?)\*\*/g;
   parsed = parsed.replace(boldRegex, '<strong>$1</strong>');
-  
+
   var italicRegex = /\*(.*?)\*/g;
   parsed = parsed.replace(italicRegex, '<em>$1</em>');
-  
+
   var linkRegex = /\[([^\]]+)]\(([^)]+)\)/g;
   parsed = parsed.replace(linkRegex, '<a href="$2" target="_blank">$1</a>');
-  
+
   parsed = parsed.replace(/\n/g, '<br>');
-  
+
   return parsed;
 }
 
 function removeMarkdown(parsed) {
   parsed = parsed.replace(/<\/?[^>]+(>|$)/g, '');
-  
+
   var grayTextRegex = /--(.*?)--/g;
   parsed = parsed.replace(grayTextRegex, '$1');
-  
+
   var boldRegex = /\*\*(.*?)\*\*/g;
   parsed = parsed.replace(boldRegex, '$1');
-  
+
   var italicRegex = /\*(.*?)\*/g;
   parsed = parsed.replace(italicRegex, '$1');
-  
+
   var linkRegex = /\[([^\]]+)]\(([^)]+)\)/g;
   parsed = parsed.replace(linkRegex, '$1');
-  
+
   return parsed;
 }
 
@@ -173,11 +173,11 @@ function formatUptime(uptimeInSeconds) {
   const secondsInMinute = 60;
   const secondsInHour = secondsInMinute * 60;
   const secondsInDay = secondsInHour * 24;
-  
+
   const days = Math.floor(uptimeInSeconds / secondsInDay);
   const hours = Math.floor((uptimeInSeconds % secondsInDay) / secondsInHour);
   const minutes = Math.floor((uptimeInSeconds % secondsInHour) / secondsInMinute);
-  
+
   return `${days}d ${hours}h ${minutes}m`;
 }
 
@@ -186,7 +186,7 @@ let incompleteDataBuffer = '';
 function resolveDataBuffer(data, wss, rdsWss) {
   var receivedData = incompleteDataBuffer + data.toString();
   const isIncomplete = (receivedData.slice(-1) != '\n');
-  
+
   if (isIncomplete) {
     const position = receivedData.lastIndexOf('\n');
     if (position < 0) {
@@ -197,7 +197,7 @@ function resolveDataBuffer(data, wss, rdsWss) {
       receivedData = receivedData.slice(0, position + 1);
     }
   } else incompleteDataBuffer = '';
-  
+
   if (receivedData.length) dataHandler.handleData(wss, receivedData, rdsWss);
 }
 
@@ -207,7 +207,7 @@ function kickClient(ipAddress) {
   if (targetClient && targetClient.instance) {
     // Send a termination message to the client
     targetClient.instance.send('KICK');
-    
+
     // Close the WebSocket connection after a short delay to allow the client to receive the message
     setTimeout(() => {
       targetClient.instance.close();
@@ -260,17 +260,17 @@ function antispamProtection(message, clientIp, ws, userCommands, lastWarn, userC
 
   // Initialize user command history if not present
   if (!userCommandHistory[clientIp]) userCommandHistory[clientIp] = [];
-  
+
   // Record the current timestamp for the user
   userCommandHistory[clientIp].push(now);
-  
+
   // Remove timestamps older than 20 ms from the history
   userCommandHistory[clientIp] = userCommandHistory[clientIp].filter(timestamp => now - timestamp <= 20);
-  
+
   // Check if there are 8 or more commands in the last 20 ms
   if (userCommandHistory[clientIp].length >= 8) {
       consoleCmd.logWarn(`User \x1b[90m${clientIp}\x1b[0m is spamming with rapid commands. Connection will be terminated and user will be banned.`);
-      
+
     // Check if the normalized IP is already in the banlist
     const isAlreadyBanned = serverConfig.webserver.banlist.some(banEntry => banEntry[0] === normalizedClientIp);
 
@@ -280,7 +280,7 @@ function antispamProtection(message, clientIp, ws, userCommands, lastWarn, userC
         consoleCmd.logInfo(`User \x1b[90m${normalizedClientIp}\x1b[0m has been added to the banlist due to extreme spam.`);
         configSave();
     }
-      
+
       ws.close(1008, 'Bot-like behavior detected');
       return command; // Return command value before closing connection
   }

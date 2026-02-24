@@ -598,22 +598,22 @@ const rdsEccF0F4Lut = [
 
 function rdsEccLookup(pi, ecc) {
   const PI_UNKNOWN = -1;
-  
+
   const piCountry = (pi >> 12) & 0xF;
-  
+
   if (pi === PI_UNKNOWN || piCountry === 0) {
     return ""
   }
-  
+
   const piId = piCountry - 1;
-  
+
   const eccRanges = [
     { min: 0xA0, max: 0xA6, lut: rdsEccA0A6Lut },
     { min: 0xD0, max: 0xD4, lut: rdsEccD0D4Lut },
     { min: 0xE0, max: 0xE5, lut: rdsEccE0E5Lut },
     { min: 0xF0, max: 0xF4, lut: rdsEccF0F4Lut }
   ];
-  
+
   // Check each range
   for (const range of eccRanges) {
     if (ecc >= range.min && ecc <= range.max) {
@@ -621,7 +621,7 @@ function rdsEccLookup(pi, ecc) {
       return range.lut[eccId][piId];
     }
   }
-  
+
   return ""
 }
 

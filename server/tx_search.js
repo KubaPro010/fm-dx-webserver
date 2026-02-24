@@ -96,9 +96,7 @@ async function buildTxDatabase() {
                 consoleCmd.logInfo('Retrying transmitter database download...');
             }
         }
-    } else {
-        consoleCmd.logInfo('Server latitude and longitude must be set before transmitter database can be built');
-    }
+    } else consoleCmd.logInfo('Server latitude and longitude must be set before transmitter database can be built');
 }
 
 // Function to build index map of PI+Freq combinations
@@ -162,8 +160,7 @@ function getStateBoundingBox(coordinates) {
 
 // Function to check if a city (lat, lon) falls within the bounding box of a state
 function isCityInState(lat, lon, boundingBox) {
-    return lat >= boundingBox.minLat && lat <= boundingBox.maxLat &&
-           lon >= boundingBox.minLon && lon <= boundingBox.maxLon;
+    return lat >= boundingBox.minLat && lat <= boundingBox.maxLat && lon >= boundingBox.minLon && lon <= boundingBox.maxLon;
 }
 
 // Function to check if a city (lat, lon) is inside any US state and return the state name
@@ -231,11 +228,8 @@ function evaluateStation(station, esMode) {
     let extraWeight = erp > weightedErp && station.distanceKm <= weightDistance ? 0.3 : 0;
     let score = 0;
     // If ERP is 1W, use a simpler formula to avoid zero-scoring.
-    if (erp === 0.001) {
-        score = erp / station.distanceKm;
-    } else {
-        score = ((10 * (Math.log10(erp * 1000))) / weightDistance) + extraWeight;
-    }
+    if (erp === 0.001) score = erp / station.distanceKm;
+    else score = ((10 * (Math.log10(erp * 1000))) / weightDistance) + extraWeight;
     return score;
 }
 
@@ -304,12 +298,8 @@ async function fetchTx(freq, piCode, rdsPs) {
             loc => loc.distanceKm < 700 && loc.erp >= 10
         );
         let esMode = false;
-        if (!tropoPriority) {
-            esMode = checkEs();
-        }
-        for (let loc of filteredLocations) {
-            loc.score = evaluateStation(loc, esMode);
-        }
+        if (!tropoPriority) esMode = checkEs();
+        for (let loc of filteredLocations) loc.score = evaluateStation(loc, esMode);
         // Sort by score in descending order
         filteredLocations.sort((a, b) => b.score - a.score);
         match = filteredLocations[0];
@@ -323,11 +313,9 @@ async function fetchTx(freq, piCode, rdsPs) {
     }
 
     if (match) {
-        if (match.itu === 'USA') {
+        if (match.itu == 'USA') { // Also known as Dumbfuckinstan. they should not go to hell, but hell+ (it is NOT better)
             const state = getStateForCoordinates(match.lat, match.lon);
-            if (state) {
-                match.state = state;  // Add state to matchingCity
-            }
+            if (state) match.state = state;  // Add state to matchingCity
         }
         const result = {
             station: match.detectedByPireg
@@ -360,9 +348,7 @@ function checkEs() {
     const now = Date.now();
     const url = "https://fmdx.org/includes/tools/get_muf.php";
 
-    if (esSwitchCache.lastCheck && now - esSwitchCache.lastCheck < esFetchInterval) {
-        return esSwitchCache.esSwitch;
-    }
+    if (esSwitchCache.lastCheck && now - esSwitchCache.lastCheck < esFetchInterval) return esSwitchCache.esSwitch;
 
     if (Latitude > 20) {
         esSwitchCache.lastCheck = now;
@@ -389,15 +375,12 @@ function haversine(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const dLat = deg2rad(lat2 - lat1);
     const dLon = deg2rad(lon2 - lon1);
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
 
     const y = Math.sin(dLon) * Math.cos(deg2rad(lat2));
-    const x = Math.cos(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) -
-              Math.sin(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(dLon);
+    const x = Math.cos(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) - Math.sin(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(dLon);
     const azimuth = Math.atan2(y, x);
     const azimuthDegrees = (azimuth * 180 / Math.PI + 360) % 360;
 

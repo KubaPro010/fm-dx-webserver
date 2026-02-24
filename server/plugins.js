@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const consoleCmd = require('./console');
-const { serverConfig } = require('./server_config');
 
 // Function to read all .js files in a directory
 function readJSFiles(dir) {
@@ -11,7 +10,6 @@ function readJSFiles(dir) {
 
 // Function to parse plugin config from a file
 function parsePluginConfig(filePath) {
-    const fileContent = fs.readFileSync(filePath, 'utf8');
     const pluginConfig = {};
 
     // Assuming pluginConfig is a JavaScript object defined in each .js file
@@ -31,9 +29,7 @@ function parsePluginConfig(filePath) {
             }
 
             // Check if the destination directory exists, if not, create it
-            if (!fs.existsSync(destinationDir)) {
-                fs.mkdirSync(destinationDir, { recursive: true }); // Create directory recursively
-            }
+            if (!fs.existsSync(destinationDir)) fs.mkdirSync(destinationDir, { recursive: true }); // Create directory recursively
 
             const destinationFile = path.join(destinationDir, path.basename(sourcePath));
 
@@ -41,9 +37,7 @@ function parsePluginConfig(filePath) {
             if (process.platform !== 'win32') {
                 // On Linux, create a symlink
                 try {
-                    if (fs.existsSync(destinationFile)) {
-                        fs.unlinkSync(destinationFile); // Remove existing file/symlink
-                    }
+                    if (fs.existsSync(destinationFile)) fs.unlinkSync(destinationFile); // Remove existing file/symlink
                     fs.symlinkSync(sourcePath, destinationFile);
                     setTimeout(function() {
                         consoleCmd.logInfo(`Plugin ${pluginConfig.name} ${pluginConfig.version} initialized successfully.`);  
@@ -52,9 +46,7 @@ function parsePluginConfig(filePath) {
                     console.error(`Error creating symlink at ${destinationFile}: ${err.message}`);
                 }
             }
-        } else {
-            console.error(`Error: frontEndPath is not defined in ${filePath}`);
-        }
+        } else console.error(`Error: frontEndPath is not defined in ${filePath}`);
     } catch (err) {
         console.error(`Error parsing plugin config from ${filePath}: ${err.message}`);
     }
@@ -71,9 +63,7 @@ function collectPluginConfigs() {
     jsFiles.forEach(file => {
         const filePath = path.join(pluginsDir, file);
         const config = parsePluginConfig(filePath);
-        if (Object.keys(config).length > 0) {
-            pluginConfigs.push(config);
-        }
+        if (Object.keys(config).length > 0) pluginConfigs.push(config);
     });
 
     return pluginConfigs;
@@ -81,9 +71,7 @@ function collectPluginConfigs() {
 
 // Ensure the web/js/plugins directory exists
 const webJsPluginsDir = path.join(__dirname, '../web/js/plugins');
-if (!fs.existsSync(webJsPluginsDir)) {
-    fs.mkdirSync(webJsPluginsDir, { recursive: true });
-}
+if (!fs.existsSync(webJsPluginsDir)) fs.mkdirSync(webJsPluginsDir, { recursive: true });
 
 // Main function to create symlinks/junctions for plugins
 function createLinks() {
@@ -93,13 +81,8 @@ function createLinks() {
     if (process.platform === 'win32') {
         // On Windows, create a junction
         try {
-            if (fs.existsSync(destinationPluginsDir)) {
-                fs.rmSync(destinationPluginsDir, { recursive: true });
-            }
+            if (fs.existsSync(destinationPluginsDir)) fs.rmSync(destinationPluginsDir, { recursive: true });
             fs.symlinkSync(pluginsDir, destinationPluginsDir, 'junction');
-            setTimeout(function() {
-                //consoleCmd.logInfo(`Plugin ${pluginConfig.name} ${pluginConfig.version} initialized successfully.`);  
-            }, 500)
         } catch (err) {
             console.error(`Error creating junction at ${destinationPluginsDir}: ${err.message}`);
         }

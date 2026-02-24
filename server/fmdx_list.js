@@ -65,7 +65,7 @@ function sendUpdate() {
     tuner: serverConfig.device || '',
     bwLimit: bwLimit,
     os: currentOs,
-    version: pjson.version 
+    version: pjson.version
   };
 
   if (serverConfig.identification.token) request.token = serverConfig.identification.token;

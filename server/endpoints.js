@@ -19,7 +19,7 @@ const { allPluginConfigs } = require('./plugins');
 
 // Endpoints
 router.get('/', (req, res) => {
-    let requestIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    let requestIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
     const normalizedIp = requestIp?.replace(/^::ffff:/, '');
     const ipList = (normalizedIp || '').split(',').map(ip => ip.trim()).filter(Boolean); // in case there are multiple IPs (proxy), we need to check all of them
@@ -175,11 +175,11 @@ router.get('/wizard', (req, res) => {
   
 
 router.get('/rds', (req, res) => {
-    res.send('Please connect using a WebSocket compatible app to obtain RDS stream.');
+    res.send('Please connect using a WebSocket compatible app to obtain the RDS stream.');
 });
 
 router.get('/rdsspy', (req, res) => {
-    res.send('Please connect using a WebSocket compatible app to obtain RDS stream.');
+    res.send('Please connect using a WebSocket compatible app to obtain the RDS stream.');
 });
 
 router.get('/api', (req, res) => {
@@ -195,24 +195,17 @@ router.get('/api', (req, res) => {
 
 
 const loginAttempts = {}; // Format: { 'ip': { count: 1, lastAttempt: 1234567890 } }
-const MAX_ATTEMPTS = 25;
+const MAX_ATTEMPTS = 15;
 const WINDOW_MS = 15 * 60 * 1000; 
 
 const authenticate = (req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress;
     const now = Date.now();
 
-    if (!loginAttempts[ip]) {
-        loginAttempts[ip] = { count: 0, lastAttempt: now };
-    } else if (now - loginAttempts[ip].lastAttempt > WINDOW_MS) {
-        loginAttempts[ip] = { count: 0, lastAttempt: now };
-    }
+    if (!loginAttempts[ip]) loginAttempts[ip] = { count: 0, lastAttempt: now };
+    else if (now - loginAttempts[ip].lastAttempt > WINDOW_MS) loginAttempts[ip] = { count: 0, lastAttempt: now };
 
-    if (loginAttempts[ip].count >= MAX_ATTEMPTS) {
-        return res.status(403).json({
-            message: 'Too many login attempts. Please try again later.'
-        });
-    }
+    if (loginAttempts[ip].count >= MAX_ATTEMPTS) return res.status(403).json({message: 'Too many login attempts. Please try again later.'});
 
     const { password } = req.body;
 
@@ -250,11 +243,9 @@ router.get('/logout', (req, res) => {
 });
 
 router.get('/kick', (req, res) => {
-    const ipAddress = req.query.ip; // Extract the IP address parameter from the query string
+    const ipAddress = req.query.ip;
     // Terminate the WebSocket connection for the specified IP address
-    if(req.session.isAdminAuthenticated) {
-        helpers.kickClient(ipAddress);
-    }
+    if(req.session.isAdminAuthenticated) helpers.kickClient(ipAddress);
     setTimeout(() => {
         res.redirect('/setup');
     }, 500);
@@ -269,9 +260,7 @@ router.get('/addToBanlist', (req, res) => {
 
     userBanData = [ipAddress, location, date, reason];
 
-    if (typeof serverConfig.webserver.banlist !== 'object') {
-        serverConfig.webserver.banlist = [];
-    }
+    if (typeof serverConfig.webserver.banlist !== 'object') serverConfig.webserver.banlist = [];
 
     serverConfig.webserver.banlist.push(userBanData);
     configSave();
@@ -281,17 +270,14 @@ router.get('/addToBanlist', (req, res) => {
 
 router.get('/removeFromBanlist', (req, res) => {
     if (!req.session.isAdminAuthenticated) return;
+
     const ipAddress = req.query.ip;
 
-    if (typeof serverConfig.webserver.banlist !== 'object') {
-        serverConfig.webserver.banlist = [];
-    }
+    if (typeof serverConfig.webserver.banlist !== 'object') serverConfig.webserver.banlist = [];
 
     const banIndex = serverConfig.webserver.banlist.findIndex(ban => ban[0] === ipAddress);
 
-    if (banIndex === -1) {
-        return res.status(404).json({ success: false, message: 'IP address not found in banlist.' });
-    }
+    if (banIndex === -1) return res.status(404).json({ success: false, message: 'IP address not found in banlist.' });
 
     serverConfig.webserver.banlist.splice(banIndex, 1);
     configSave();
@@ -303,19 +289,14 @@ router.get('/removeFromBanlist', (req, res) => {
 router.post('/saveData', (req, res) => {
     const data = req.body;
     let firstSetup;
-    if(req.session.isAdminAuthenticated || configExists() === false) {
+    if(req.session.isAdminAuthenticated || !configExists()) {
         configUpdate(data);
         fmdxList.update();
         
-        if(configExists() === false) {
-            firstSetup = true;
-        }
+        if(!configExists()) firstSetup = true;
         logInfo('Server config changed successfully.');
-        if(firstSetup === true) {
-            res.status(200).send('Data saved successfully!\nPlease, restart the server to load your configuration.');
-        } else {
-            res.status(200).send('Data saved successfully!\nSome settings may need a server restart to apply.');
-        }
+        if(firstSetup === true) res.status(200).send('Data saved successfully!\nPlease, restart the server to load your configuration.');
+        else res.status(200).send('Data saved successfully!\nSome settings may need a server restart to apply.');
     }
 });
 
@@ -327,9 +308,8 @@ router.get('/getData', (req, res) => {
     if(req.session.isAdminAuthenticated) {
         // Check if the file exists
         fs.access(configPath, fs.constants.F_OK, (err) => {
-            if (err) {
-                console.log(err);
-            } else {
+            if (err) console.log(err);
+            else {
                 // File exists, send it as the response
                 res.sendFile(path.join(__dirname, '../' + configName + '.json'));
             }
@@ -342,9 +322,7 @@ router.get('/getDevices', (req, res) => {
         parseAudioDevice((result) => {
             res.json(result);
         });
-    } else {
-        res.status(403).json({ error: 'Unauthorized' });
-    }
+    } else res.status(403).json({ error: 'Unauthorized' });
 });
 
 /* Static data are being sent through here on connection - these don't change when the server is running */
@@ -389,9 +367,7 @@ function canLog(id) {
         }
     }
     
-    if (logHistory[id] && (now - logHistory[id]) < sixtyMinutes) {
-        return false; // Deny logging if less than 60 minutes have passed
-    }
+    if (logHistory[id] && (now - logHistory[id]) < sixtyMinutes) return false; // Deny logging if less than 60 minutes have passed
     logHistory[id] = now; // Update with the current timestamp
     return true;
 }

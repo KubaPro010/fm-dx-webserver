@@ -5,7 +5,7 @@
 // - Optionally broadcasts events to connected plugin WebSocket clients
 
 const { EventEmitter } = require('events');
-const { logInfo, logWarn, logError } = require('./console');
+const { logWarn, logError } = require('./console');
 
 let output = null;
 let wss = null;

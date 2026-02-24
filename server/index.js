@@ -19,6 +19,7 @@ const { SerialPort } = require('serialport');
 const tunnel = require('./tunnel');
 const { createChatServer } = require('./chat');
 const { createAudioServer } = require('./stream/ws.js');
+const figlet = require('figlet');
 
 // File imports
 const helpers = require('./helpers');
@@ -35,14 +36,10 @@ function findServerFiles(plugins) {
   let results = [];
   plugins.forEach(plugin => {
     // Remove .js extension if present
-    if (plugin.endsWith('.js')) {
-      plugin = plugin.slice(0, -3);
-    }
+    if (plugin.endsWith('.js')) plugin = plugin.slice(0, -3);
 
     const pluginPath = path.join(__dirname, '..', 'plugins', `${plugin}_server.js`);
-    if (fs.existsSync(pluginPath) && fs.statSync(pluginPath).isFile()) {
-      results.push(pluginPath);
-    }
+    if (fs.existsSync(pluginPath) && fs.statSync(pluginPath).isFile()) results.push(pluginPath);
   });
   return results;
 }
@@ -80,14 +77,14 @@ const terminalWidth = readline.createInterface({
 }).output.columns;
 
 
-// Couldn't get figlet.js or something like that?
-console.log(`\x1b[32m
- _____ __  __       ______  __ __        __   _                                  
-|  ___|  \\/  |     |  _ \\ \\/ / \\ \\      / /__| |__  ___  ___ _ ____   _____ _ __ 
-| |_  | |\\/| |_____| | | \\  /   \\ \\ /\\ / / _ \\ '_ \\/ __|/ _ \\ '__\\ \\ / / _ \\ '__|
-|  _| | |  | |_____| |_| /  \\    \\ V  V /  __/ |_) \\__ \\  __/ |   \\ V /  __/ |   
-|_|   |_|  |_|     |____/_/\\_\\    \\_/\\_/ \\___|_.__/|___/\\___|_|    \\_/ \\___|_|                                                
-`);
+figlet("FM-DX Webserver", function (err, data) {
+  if (err) {
+    console.log("Something went wrong...");
+    console.dir(err);
+    return;
+  }
+  console.log('\x1b[32m' + data);
+});
 console.log('\x1b[32m\x1b[2mby Noobish @ \x1b[4mFMDX.org\x1b[0m');
 console.log("v" + pjson.version)
 console.log('\x1b[90m' + '─'.repeat(terminalWidth - 1) + '\x1b[0m');
@@ -104,7 +101,7 @@ let timeoutAntenna;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 const sessionMiddleware = session({
-  secret: 'GTce3tN6U8odMwoI',
+  secret: 'GTce3tN6U8odMwoI', // Cool
   resave: false,
   saveUninitialized: true,
 });
@@ -324,9 +321,6 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../web'));
 app.use('/', endpoints);
 
-/**
- * WEBSOCKET BLOCK
- */
 const tunerLockTracker = new WeakMap();
 const ipConnectionCounts = new Map(); // Per-IP limit variables
 const ipLogTimestamps = new Map();
@@ -349,7 +343,7 @@ setInterval(() => {
 
 wss.on('connection', (ws, request) => {
     const output = serverConfig.xdrd.wirelessConnection ? client : serialport;
-    let clientIp = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
+    let clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress;
     const userCommandHistory = {};
     const normalizedClientIp = clientIp?.replace(/^::ffff:/, '');
 
@@ -363,17 +357,10 @@ wss.on('connection', (ws, request) => {
     // Per-IP limit connection open
     if (clientIp) {
         const isLocalIp = (
-            clientIp === '127.0.0.1' ||
-            clientIp === '::1' ||
-            clientIp === '::ffff:127.0.0.1' ||
-            clientIp.startsWith('192.168.') ||
-            clientIp.startsWith('10.') ||
-            clientIp.startsWith('172.16.')
-        );
+            clientIp === '127.0.0.1' || clientIp === '::1' || clientIp === '::ffff:127.0.0.1' ||
+            clientIp.startsWith('192.168.') || clientIp.startsWith('10.') || clientIp.startsWith('172.16.'));
         if (!isLocalIp) {
-            if (!ipConnectionCounts.has(clientIp)) {
-                ipConnectionCounts.set(clientIp, 0);
-            }
+            if (!ipConnectionCounts.has(clientIp)) ipConnectionCounts.set(clientIp, 0);
             const currentCount = ipConnectionCounts.get(clientIp);
             if (currentCount >= MAX_CONNECTIONS_PER_IP) {
                 ws.close(1008, 'Too many open connections from this IP');
@@ -389,7 +376,9 @@ wss.on('connection', (ws, request) => {
         }
     }
 
-    if (clientIp !== '::ffff:127.0.0.1' || (request.connection && request.connection.remoteAddress && request.connection.remoteAddress !== '::ffff:127.0.0.1') || (request.headers && request.headers['origin'] && request.headers['origin'].trim() !== '')) {
+    if (clientIp !== '::ffff:127.0.0.1' || 
+      (request.socket && request.socket.remoteAddress && request.socket.remoteAddress !== '::ffff:127.0.0.1') || 
+      (request.headers && request.headers['origin'] && request.headers['origin'].trim() !== '')) {
       currentUsers++;
     }
 
@@ -400,13 +389,10 @@ wss.on('connection', (ws, request) => {
           ws.close(1008, 'Banned IP');
           return;
       }
+      dataHandler.showOnlineUsers(currentUsers);
 
-    dataHandler.showOnlineUsers(currentUsers);
-
-    if (currentUsers === 1 && serverConfig.autoShutdown === true && serverConfig.xdrd.wirelessConnection) {
-        serverConfig.xdrd.wirelessConnection ? connectToXdrd() : serialport.write('x\n');
-    }
-  });
+      if (currentUsers === 1 && serverConfig.autoShutdown === true && serverConfig.xdrd.wirelessConnection) serverConfig.xdrd.wirelessConnection ? connectToXdrd() : serialport.write('x\n');
+    });
 
     const userCommands = {};
     let lastWarn = { time: 0 };
@@ -474,7 +460,9 @@ wss.on('connection', (ws, request) => {
         }
       }
 
-      if (clientIp !== '::ffff:127.0.0.1' || (request.connection && request.connection.remoteAddress && request.connection.remoteAddress !== '::ffff:127.0.0.1') || (request.headers && request.headers['origin'] && request.headers['origin'].trim() !== '')) {
+      if (clientIp !== '::ffff:127.0.0.1' || 
+        (request.socket && request.socket.remoteAddress && request.socket.remoteAddress !== '::ffff:127.0.0.1') || 
+        (request.headers && request.headers['origin'] && request.headers['origin'].trim() !== '')) {
         currentUsers--;
       }
       dataHandler.showOnlineUsers(currentUsers);
@@ -540,7 +528,7 @@ wss.on('connection', (ws, request) => {
 
 // Additional web socket for using plugins
 pluginsWss.on('connection', (ws, request) => {
-    const clientIp = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
+    const clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress;
     const userCommandHistory = {};
     if (serverConfig.webserver.banlist?.includes(clientIp)) {
       ws.close(1008, 'Banned IP');
@@ -578,39 +566,23 @@ pluginsWss.on('connection', (ws, request) => {
 
 // Websocket register for /text, /audio and /chat paths
 httpServer.on('upgrade', (request, socket, head) => { 
-  const clientIp = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
+  const clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress;
   if (serverConfig.webserver.banlist?.includes(clientIp)) {
     socket.destroy();
     return;
   }
-  if (request.url === '/text') {
+
+  var upgradeWss = undefined;
+  if (request.url === '/text') upgradeWss = wss;
+  else if (request.url === '/audio') upgradeWss = audioWss;
+  else if (request.url === '/chat' && serverConfig.webserver.chatEnabled === true) upgradeWss = chatWss;
+  else if (request.url === '/rds' || request.url === '/rdsspy') upgradeWss = rdsWss;
+  else if (request.url === '/data_plugins') upgradeWss = pluginsWss;
+  
+  if(upgradeWss) {
     sessionMiddleware(request, {}, () => {
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        wss.emit('connection', ws, request);
-      });
-    });
-  } else if (request.url === '/audio') {
-    sessionMiddleware(request, {}, () => {
-      audioWss.handleUpgrade(request, socket, head, (ws) => {
-        audioWss.emit('connection', ws, request);
-      });
-    });
-  } else if (request.url === '/chat' && serverConfig.webserver.chatEnabled === true) {
-    sessionMiddleware(request, {}, () => {
-      chatWss.handleUpgrade(request, socket, head, (ws) => {
-        chatWss.emit('connection', ws, request);
-      });
-    });
-  } else if (request.url === '/rds' || request.url === '/rdsspy') {
-    sessionMiddleware(request, {}, () => {
-      rdsWss.handleUpgrade(request, socket, head, (ws) => {
-        rdsWss.emit('connection', ws, request);
-      });
-    });
-  } else if (request.url === '/data_plugins') {
-    sessionMiddleware(request, {}, () => {
-      pluginsWss.handleUpgrade(request, socket, head, (ws) => {
-        pluginsWss.emit('connection', ws, request);
+      upgradeWss.handleUpgrade(request, socket, head, (ws) => {
+        upgradeWss.emit('connection', ws, request);
       });
     });
   } else socket.destroy();

@@ -8,7 +8,7 @@ const updateInterval = 75;
 // Initialize the data object
 var dataToSend = {
   pi: '?',
-  freq: 87.500.toFixed(3),
+  freq: (87.500).toFixed(3),
   sig: 0,
   sigRaw: '',
   sigTop: -Infinity,
@@ -71,9 +71,7 @@ function rdsReceived() {
     clearTimeout(rdsTimeoutTimer);
     rdsTimeoutTimer = null;
   }
-  if (serverConfig.webserver.rdsTimeout && serverConfig.webserver.rdsTimeout != 0) {
-    rdsTimeoutTimer = setTimeout(rdsReset, serverConfig.webserver.rdsTimeout * 1000);
-  }
+  if (serverConfig.webserver.rdsTimeout && serverConfig.webserver.rdsTimeout != 0) rdsTimeoutTimer = setTimeout(rdsReset, serverConfig.webserver.rdsTimeout * 1000);
 }
 
 function rdsReset() {

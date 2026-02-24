@@ -28,9 +28,7 @@ function parseAudioDevice(options, callback) {
                     const matches = (data.match(regex) || []).map(match => 'hw:' + match.replace(/\s+/g, '').slice(1, -1));
 
                     matches.forEach(match => {
-                        if (typeof match === 'string') {
-                            audioDevices.push({ name: match });
-                        }
+                        if (typeof match === 'string') audioDevices.push({ name: match });
                     });
                 } catch (err) {
                     console.error(`Error reading file: ${err.message}`);

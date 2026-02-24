@@ -51,7 +51,7 @@ class RDSDecoder {
     const group = (blockB >> 12) & 0xF;
     const version = (blockB >> 11) & 0x1;
     this.data.tp = Number((blockB >> 10) & 1);
-    this.data.pty = (blockB >> 5) & 0b11111;
+    this.data.pty = (blockB >> 5) & 31;
 
     if (group === 0) {
         this.data.ta = (blockB >> 4) & 1;
@@ -87,7 +87,7 @@ class RDSDecoder {
             }
         }
 
-        if(d_error === 3) return; // Don't risk it
+        if(d_error > 2) return; // Don't risk it
 
         const idx = blockB & 0x3;
 
@@ -99,6 +99,7 @@ class RDSDecoder {
         this.data.ps = this.ps.join('');
         this.data.ps_errors = this.ps_errors.join(',');
     } else if (group === 1 && version === 0) {
+        if(c_error > 2) return;
         var variant_code = (blockC >> 12) & 0x7;
         switch (variant_code) {
             case 0:
@@ -120,13 +121,13 @@ class RDSDecoder {
                 this.rt1_to_clear = false;
             }
 
-            if(c_error !== 3 && multiplier !== 2) {
+            if(c_error < 2 && multiplier !== 2) {
                 this.rt1[idx * multiplier] = String.fromCharCode(blockC >> 8);
                 this.rt1[idx * multiplier + 1] = String.fromCharCode(blockC & 0xFF);
                 this.rt1_errors[idx * multiplier] = error;
                 this.rt1_errors[idx * multiplier + 1] = error;
             }
-            if(d_error !== 3) {
+            if(d_error < 2) {
                 var offset = (multiplier == 2) ? 0 : 2;
                 this.rt1[idx * multiplier + offset] = String.fromCharCode(blockD >> 8);
                 this.rt1[idx * multiplier + offset + 1] = String.fromCharCode(blockD & 0xFF);

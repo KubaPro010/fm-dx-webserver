@@ -15,12 +15,10 @@ const fileExists = path => new Promise(resolve => fs.access(path, fs.constants.F
 async function connect() {
   if (serverConfig.tunnel?.enabled === true) {
     const librariesDir = path.resolve(__dirname, '../libraries');
-    if (!await fileExists(librariesDir)) {
-      await fs.mkdir(librariesDir);
-    }
+    if (!await fileExists(librariesDir)) await fs.mkdir(librariesDir);
     const frpcPath = path.resolve(librariesDir, 'frpc' + (os.platform() === 'win32' ? '.exe' : ''));
     if (!await fileExists(frpcPath)) {
-      logInfo('frpc binary required for tunnel is not available. Downloading now...');
+      logInfo('frpc binary, required for tunnel is not available. Downloading now...');
       const frpcFileName = `frpc_${os.platform}_${os.arch}` + (os.platform() === 'win32' ? '.exe' : '');
       
       try {
@@ -33,9 +31,7 @@ async function connect() {
         return;
       }
       logInfo('Downloading of frpc is completed.')
-      if (os.platform() === 'linux' || os.platform() === 'darwin') {
-        await fs.chmod(frpcPath, 0o770);
-      }
+      if (os.platform() === 'linux' || os.platform() === 'darwin') await fs.chmod(frpcPath, 0o770);
     }
     const cfg = ejs.render(frpcConfigTemplate, {
       cfg: serverConfig.tunnel,
@@ -73,7 +69,6 @@ async function connect() {
     child.on('close', (code) => {
       logInfo(`Tunnel process exited with code ${code}`);
     });
-
   }
 }
 

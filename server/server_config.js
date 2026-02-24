@@ -133,14 +133,10 @@ let serverConfig = {
 function addMissingFields(target, source) {
   Object.keys(source).forEach(function(key) {
     if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key])) {
-      if (!target[key]) {
-        target[key] = {}; // Create missing object
-      }
+      if (!target[key]) target[key] = {}; // Create missing object
       addMissingFields(target[key], source[key]); // Recursively add missing fields
     } else {
-      if (target[key] === undefined) {
-        target[key] = source[key]; // Add missing fields only
-      }
+      if (target[key] === undefined) target[key] = source[key]; // Add missing fields only
     }
   });
 }
@@ -149,13 +145,9 @@ function addMissingFields(target, source) {
 function deepMerge(target, source) {
   Object.keys(source).forEach(function(key) {
     if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key])) {
-      if (!target[key] || typeof target[key] !== 'object') {
-        target[key] = {}; // Ensure target[key] is an object before merging
-      }
+      if (!target[key] || typeof target[key] !== 'object') target[key] = {}; // Ensure target[key] is an object before merging
       deepMerge(target[key], source[key]); // Recursively merge objects
-    } else {
-      target[key] = source[key]; // Overwrite or add the value
-    }
+    } else target[key] = source[key]; // Overwrite or add the value
   });
 }
 

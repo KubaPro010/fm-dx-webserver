@@ -4,14 +4,12 @@ const { logChat } = require('./console');
 const helpers = require('./helpers');
 
 function createChatServer(storage) {
-    if (!serverConfig.webserver.chatEnabled) {
-        return null;
-    }
+    if (!serverConfig.webserver.chatEnabled) return null;
 
     const chatWss = new WebSocket.Server({ noServer: true });
 
     chatWss.on('connection', (ws, request) => {
-        const clientIp = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
+        const clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress;
         const userCommandHistory = {};
 
         if (serverConfig.webserver.banlist?.includes(clientIp)) {
@@ -79,32 +77,19 @@ function createChatServer(storage) {
 
             if (serverConfig.webserver.banlist?.includes(clientIp)) return;
 
-            if (request.session?.isAdminAuthenticated === true) {
-                messageData.admin = true;
-            }
-
-            if (messageData.nickname?.length > 32) {
-                messageData.nickname = messageData.nickname.substring(0, 32);
-            }
-
-            if (messageData.message?.length > 255) {
-                messageData.message = messageData.message.substring(0, 255);
-            }
+            if (request.session?.isAdminAuthenticated === true) messageData.admin = true;
+            if (messageData.nickname?.length > 32) messageData.nickname = messageData.nickname.substring(0, 32);
+            if (messageData.message?.length > 255) messageData.message = messageData.message.substring(0, 255);
 
             storage.chatHistory.push(messageData);
-            if (storage.chatHistory.length > 50) {
-                storage.chatHistory.shift();
-            }
+            if (storage.chatHistory.length > 50) storage.chatHistory.shift();
 
             logChat(messageData);
 
             chatWss.clients.forEach((client) => {
                 if (client.readyState === WebSocket.OPEN) {
                     const responseMessage = { ...messageData };
-
-                    if (!request.session?.isAdminAuthenticated) {
-                        delete responseMessage.ip;
-                    }
+                    if (!request.session?.isAdminAuthenticated) delete responseMessage.ip;
 
                     client.send(JSON.stringify(responseMessage));
                 }
@@ -112,7 +97,7 @@ function createChatServer(storage) {
         });
     });
 
-    return chatWss; // ← VERY IMPORTANT
+    return chatWss;
 }
 
 module.exports = { createChatServer };

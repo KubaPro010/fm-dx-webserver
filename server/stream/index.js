@@ -21,9 +21,9 @@ checkFFmpeg().then((ffmpegPath) => {
     logInfo(`${consoleLogTitle} Using ${ffmpegPath === 'ffmpeg' ? 'system-installed FFmpeg' : 'ffmpeg-static'}`);
     logInfo(`${consoleLogTitle} Starting audio stream on device: \x1b[35m${serverConfig.audio.audioDevice}\x1b[0m`);
 
-    const sampleRate = Number(this?.Server?.SampleRate || serverConfig.audio.sampleRate || 44100) + Number(serverConfig.audio.samplerateOffset || 0);
+    const sampleRate = Number(serverConfig.audio.sampleRate || 44100) + Number(serverConfig.audio.samplerateOffset || 0);
 
-    const channels = Number(this?.Server?.Channels || serverConfig.audio.audioChannels || 2);
+    const channels = Number(serverConfig.audio.audioChannels || 2);
 
     let ffmpeg = null;
     let restartTimer = null;
@@ -48,7 +48,7 @@ checkFFmpeg().then((ffmpegPath) => {
 
             ...inputArgs,
 
-            "-thread_queue_size", "1024",
+            "-thread_queue_size", "1536",
             "-ar", String(sampleRate),
             "-ac", String(channels),
 
