@@ -88,6 +88,7 @@ async function buildTxDatabase() {
                 localDb = await response.json();
                 buildPiFreqIndex();
                 consoleCmd.logInfo('Transmitter database successfully loaded.');
+                nextLocalDbUpdate = Date.now() + localDbUpdateInterval;
                 awaitingTxInfo = false;
             } catch (error) {
                 consoleCmd.logError("Failed to fetch transmitter database:", error);
