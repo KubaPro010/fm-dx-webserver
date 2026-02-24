@@ -30,10 +30,10 @@ const getCurrentTime = () => {
 
 const removeANSIEscapeCodes = (str) => str.replace(ANSI_ESCAPE_CODE_PATTERN, ''); // Strip ANSI escape codes from a string
 
-const logMessage = (type, messages, verbose = false) => {
+const logMessage = (type, messages) => {
     const logMessage = `${getCurrentTime()} ${MESSAGE_PREFIX[type]} ${messages.join(' ')}`;
 
-    if (type === 'DEBUG' && verboseMode || type === 'FFMPEG' && verboseModeFfmpeg || type !== 'DEBUG' && type !== 'FFMPEG') {
+    if ((type === 'DEBUG' && verboseMode) || (type === 'FFMPEG' && verboseModeFfmpeg) || type !== 'DEBUG' && type !== 'FFMPEG') {
         logs.push(logMessage);
         if (logs.length > maxConsoleLogLines) logs.shift();
         console.log(logMessage);
@@ -42,7 +42,7 @@ const logMessage = (type, messages, verbose = false) => {
     if(type !== 'FFMPEG') appendLogToBuffer(logMessage);
 };
 
-const logDebug = (...messages) => logMessage('DEBUG', messages, verboseMode);
+const logDebug = (...messages) => logMessage('DEBUG', messages);
 const logChat = (message) => logMessage('CHAT', [`${message.nickname} (${message.ip}) sent a chat message: ${message.message}`]);
 const logError = (...messages) => logMessage('ERROR', messages);
 const logFfmpeg = (...messages) => logMessage('FFMPEG', messages, verboseModeFfmpeg);

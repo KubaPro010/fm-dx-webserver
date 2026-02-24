@@ -3,6 +3,9 @@ const { serverConfig } = require('./server_config');
 const consoleCmd = require('./console');
 
 let localDb = {};
+let nextLocalDbUpdate = 0;
+const localDbUpdateInterval = 7 * 24 * 60 * 60 * 1000; // 7-day database update interval
+let awaitingTxInfo = true;
 let lastFetchTime = 0;
 let piFreqIndex = {}; // Indexing for speedier PI+Freq combinations
 const fetchInterval = 1000;
@@ -71,7 +74,7 @@ if (serverConfig.identification.gpsMode) {
 // Function to build local TX database from FMDX Maps endpoint.
 async function buildTxDatabase() {
     if (Latitude.length > 0 && Longitude.length > 0) {
-        let awaitingTxInfo = true;
+        awaitingTxInfo = true;
         while (awaitingTxInfo) {
             try {
                 consoleCmd.logInfo('Fetching transmitter database...');
@@ -240,6 +243,10 @@ async function fetchTx(freq, piCode, rdsPs) {
     let match = null;
     let multiMatches = [];
     const now = Date.now();
+    if (now > nextLocalDbUpdate && !awaitingTxInfo) {
+        consoleCmd.logInfo('Time to update transmitter database.');
+        buildTxDatabase();
+    }
     freq = parseFloat(freq);
 
     if (
@@ -264,6 +271,15 @@ async function fetchTx(freq, piCode, rdsPs) {
         ...locData,
         stations: [station]
     }));
+
+    if (filteredLocations.length > 1) {
+        const extraFilteredLocations = filteredLocations.map(locData => ({
+            ...locData,
+            stations: locData.stations.filter(station => (station.ps.toLowerCase() === rdsPs.replace(/ /g, '_').toLowerCase()))
+        })).filter(locData => locData.stations.length > 0);
+
+        if (extraFilteredLocations.length > 0) filteredLocations = extraFilteredLocations;
+    }
 
     // Only check PS if we have more than one match.
     if (filteredLocations.length > 1) {
