@@ -319,15 +319,15 @@ function startPluginsWithDelay(plugins, delay) {
   plugins.forEach((pluginPath, index) => {
     setTimeout(() => {
       const pluginName = path.basename(pluginPath, '.js'); // Extract plugin name from path
-      logInfo(`-----------------------------------------------------------------`);
-      logInfo(`Plugin ${pluginName} loaded successfully!`);
+      consoleCmd.logInfo(`-----------------------------------------------------------------`);
+      consoleCmd.logInfo(`Plugin ${pluginName} loaded successfully!`);
       require(pluginPath);
     }, delay * index);
   });
 
   // Add final log line after all plugins are loaded
   setTimeout(() => {
-    logInfo(`-----------------------------------------------------------------`);
+    consoleCmd.logInfo(`-----------------------------------------------------------------`);
   }, delay * plugins.length);
 }
 
