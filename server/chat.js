@@ -3,12 +3,19 @@ const { serverConfig } = require('./server_config');
 const { logChat } = require('./console');
 const helpers = require('./helpers');
 
+function heartbeat() { // WebSocket heartbeat helper
+    this.isAlive = true;
+}
+
 function createChatServer(storage) {
     if (!serverConfig.webserver.chatEnabled) return null;
 
     const chatWss = new WebSocket.Server({ noServer: true });
 
     chatWss.on('connection', (ws, request) => {
+        ws.isAlive = true;
+        ws.on('pong', heartbeat);
+
         const clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress;
         const userCommandHistory = {};
 
@@ -25,19 +32,18 @@ function createChatServer(storage) {
             ws.send(JSON.stringify(historyMessage));
         });
 
-        const ipMessage = {
+        ws.send(JSON.stringify({
             type: 'clientIp',
             ip: clientIp,
             admin: request.session?.isAdminAuthenticated
-        };
+        }));
 
-        ws.send(JSON.stringify(ipMessage));
 
         const userCommands = {};
         let lastWarn = { time: 0 };
 
         ws.on('message', (message) => {
-            helpers.antispamProtection(
+            message = helpers.antispamProtection(
                 message,
                 clientIp,
                 ws,
@@ -45,8 +51,11 @@ function createChatServer(storage) {
                 lastWarn,
                 userCommandHistory,
                 '5',
-                'chat'
+                'chat',
+                512
             );
+
+            if(!message) return;
 
             let messageData;
 
@@ -56,8 +65,6 @@ function createChatServer(storage) {
                 ws.send(JSON.stringify({ error: "Invalid message format" }));
                 return;
             }
-
-            console.log("Chat message:", messageData);
 
             delete messageData.admin;
             delete messageData.ip;
@@ -90,6 +97,25 @@ function createChatServer(storage) {
                 }
             });
         });
+
+        ws.on('close', () => {
+            ws.isAlive = false;
+        });
+    });
+
+    /**
+    * We will not always be receiving data, so some proxies may terminate the connection, this prevents it.
+    */
+    const interval = setInterval(() => {
+        chatWss.clients.forEach((ws) => {
+            if (ws.isAlive === false) return ws.terminate();
+            ws.isAlive = false;
+            ws.ping();
+        });
+    }, 30000);
+
+    chatWss.on('close', () => {
+        clearInterval(interval);
     });
 
     return chatWss;
