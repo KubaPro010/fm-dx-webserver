@@ -11,7 +11,8 @@ const { parseAudioDevice } = require('./stream/parser');
 const { configName, serverConfig, configUpdate, configSave, configExists, configPath } = require('./server_config');
 const helpers = require('./helpers');
 const storage = require('./storage');
-const { logInfo, logDebug, logWarn, logError, logFfmpeg, logs } = require('./console');
+const tunerProfiles = require('./tuner_profiles');
+const { logInfo, logs } = require('./console');
 const dataHandler = require('./datahandler');
 const fmdxList = require('./fmdx_list');
 const { allPluginConfigs } = require('./plugins');
@@ -48,7 +49,13 @@ router.get('/', (req, res) => {
                     isAdminAuthenticated: true,
                     videoDevices: result.audioDevices,
                     audioDevices: result.videoDevices,
-                    serialPorts: serialPorts
+                    serialPorts: serialPorts,
+                    serialPorts: serialPorts,
+                    tunerProfiles: tunerProfiles.map((profile) => ({
+                        id: profile.id,
+                        label: profile.label,
+                        detailsHtml: helpers.parseMarkdown(profile.details || '')
+                    }))
                 });
             });
         });
@@ -68,6 +75,8 @@ router.get('/', (req, res) => {
             tuningUpperLimit: serverConfig.webserver.tuningUpperLimit,
             chatEnabled: serverConfig.webserver.chatEnabled,
             device: serverConfig.device,
+            tunerProfiles,
+            si47xxAgcControl: !!serverConfig.si47xx?.agcControl,
             noPlugins,
             plugins: serverConfig.plugins,
             fmlist_integration: serverConfig.extras.fmlistIntegration,
@@ -101,7 +110,12 @@ router.get('/wizard', (req, res) => {
                 isAdminAuthenticated: req.session.isAdminAuthenticated,
                 videoDevices: result.audioDevices,
                 audioDevices: result.videoDevices,
-                serialPorts: serialPorts
+                serialPorts: serialPorts,
+                tunerProfiles: tunerProfiles.map((profile) => ({
+                    id: profile.id,
+                    label: profile.label,
+                    detailsHtml: helpers.parseMarkdown(profile.details || '')
+                }))
             });
         });
     })
@@ -135,20 +149,25 @@ router.get('/wizard', (req, res) => {
               
               const updatedConfig = loadConfig();  // Reload the config every time
               res.render('setup', {
-                  isAdminAuthenticated: req.session.isAdminAuthenticated,
-                  videoDevices: result.audioDevices,
-                  audioDevices: result.videoDevices,
-                  serialPorts: serialPorts,
-                  memoryUsage: (process.memoryUsage.rss() / 1024 / 1024).toFixed(1) + ' MB',
-                  memoryHeap: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1) + ' MB',
-                  processUptime: formattedProcessUptime,
-                  consoleOutput: logs,
-                  plugins: allPluginConfigs,
-                  enabledPlugins: updatedConfig.plugins,
-                  onlineUsers: dataHandler.dataToSend.users,
-                  connectedUsers: storage.connectedUsers,
-                  device: serverConfig.device,
-                  banlist: updatedConfig.webserver.banlist // Updated banlist from the latest config
+                    isAdminAuthenticated: req.session.isAdminAuthenticated,
+                    videoDevices: result.audioDevices,
+                    audioDevices: result.videoDevices,
+                    serialPorts: serialPorts,
+                    memoryUsage: (process.memoryUsage.rss() / 1024 / 1024).toFixed(1) + ' MB',
+                    memoryHeap: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1) + ' MB',
+                    processUptime: formattedProcessUptime,
+                    consoleOutput: logs,
+                    plugins: allPluginConfigs,
+                    enabledPlugins: updatedConfig.plugins,
+                    onlineUsers: dataHandler.dataToSend.users,
+                    connectedUsers: storage.connectedUsers,
+                    device: serverConfig.device,
+                    banlist: updatedConfig.webserver.banlist, // Updated banlist from the latest config
+                    tunerProfiles: tunerProfiles.map((profile) => ({
+                        id: profile.id,
+                        label: profile.label,
+                        detailsHtml: helpers.parseMarkdown(profile.details || '')
+                    }))
               });
           });
       }) 
@@ -164,12 +183,13 @@ router.get('/rdsspy', (req, res) => {
 });
 
 router.get('/api', (req, res) => {
-    const { ps_errors, rt0_errors, rt1_errors, ims, eq, ant, st_forced, previousFreq, txInfo, ...dataToSend } = dataHandler.dataToSend;
+    const { ps_errors, rt0_errors, rt1_errors, ims, eq, ant, st_forced, previousFreq, txInfo, rdsMode, ...dataToSend } = dataHandler.dataToSend;
     res.json({
         ...dataToSend,
         txInfo: txInfo,
         ps_errors: ps_errors,
-        ant: ant
+        ant: ant,
+        rbds: serverConfig.webserver.rdsMode
     });
 });
 
@@ -241,6 +261,7 @@ router.get('/kick', (req, res) => {
 });
 
 router.get('/addToBanlist', (req, res) => {
+    if (!req.session.isAdminAuthenticated) return;
     const ipAddress = req.query.ip;
     const location = 'Unknown';
     const date = Date.now();
@@ -252,17 +273,14 @@ router.get('/addToBanlist', (req, res) => {
         serverConfig.webserver.banlist = [];
     }
 
-    if (req.session.isAdminAuthenticated) {
-        serverConfig.webserver.banlist.push(userBanData);
-        configSave();
-        res.json({ success: true, message: 'IP address added to banlist.' });
-        helpers.kickClient(ipAddress);
-    } else {
-        res.status(403).json({ success: false, message: 'Unauthorized access.' });
-    }
+    serverConfig.webserver.banlist.push(userBanData);
+    configSave();
+    res.json({ success: true, message: 'IP address added to banlist.' });
+    helpers.kickClient(ipAddress);
 });
 
 router.get('/removeFromBanlist', (req, res) => {
+    if (!req.session.isAdminAuthenticated) return;
     const ipAddress = req.query.ip;
 
     if (typeof serverConfig.webserver.banlist !== 'object') {

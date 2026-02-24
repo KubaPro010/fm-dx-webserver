@@ -27,6 +27,7 @@ const fmdxList = require('./fmdx_list');
 const { logError, logInfo, logWarn } = require('./console');
 const storage = require('./storage');
 const { serverConfig, configExists } = require('./server_config');
+const pluginsApi = require('./plugins_api');
 const pjson = require('../package.json');
 
 // Function to find server files based on the plugins listed in config
@@ -155,8 +156,9 @@ function connectToSerial() {
       return;
     }
 
-    logInfo('Using COM device: ' + serverConfig.xdrd.comPort);
+    logInfo('Using serial port: ' + serverConfig.xdrd.comPort);
     dataHandler.state.isSerialportAlive = true;
+    pluginsApi.setOutput(serialport);
     setTimeout(() => {
         serialport.write('x\n');
     }, 3000);
@@ -175,7 +177,7 @@ function connectToSerial() {
       } else serialport.write('T87500\n');
       dataHandler.state.isSerialportRetrying = false;
 
-      serialport.write('A0\n');
+      if (serverConfig.device === 'si47xx') serialport.write('A0\n');
       serialport.write('F-1\n');
       serialport.write('W0\n');
       serverConfig.webserver.rdsMode ? serialport.write('D1\n') : serialport.write('D0\n');
@@ -202,6 +204,7 @@ function connectToSerial() {
 
   // Handle port closure
   serialport.on('close', () => {
+    pluginsApi.setOutput(null);
     logWarn('Disconnected from ' + serverConfig.xdrd.comPort + '. Attempting to reconnect.');
     setTimeout(() => {
         dataHandler.state.isSerialportRetrying = true;
@@ -220,6 +223,7 @@ function connectToXdrd() {
   if (xdrd.wirelessConnection && configExists()) {
     client.connect(xdrd.xdrdPort, xdrd.xdrdIp, () => {
       logInfo('Connection to xdrd established successfully.');
+      pluginsApi.setOutput(client);
 
       authFlags = {
         authMsg: false,
@@ -277,7 +281,7 @@ client.on('data', (data) => {
         client.write(serverConfig.defaultFreq && serverConfig.enableDefaultFreq === true ? 'T' + Math.round(serverConfig.defaultFreq * 1000) + '\n' : 'T87500\n');
         dataHandler.initialData.freq = serverConfig.defaultFreq && serverConfig.enableDefaultFreq === true ? Number(serverConfig.defaultFreq).toFixed(3) : (87.5).toFixed(3);
         dataHandler.dataToSend.freq = serverConfig.defaultFreq && serverConfig.enableDefaultFreq === true ? Number(serverConfig.defaultFreq).toFixed(3) : (87.5).toFixed(3);
-        client.write('A0\n');
+        if (serverConfig.device === 'si47xx') serialport.write('A0\n');
         client.write(serverConfig.audio.startupVolume ? 'Y' + (serverConfig.audio.startupVolume * 100).toFixed(0) + '\n' : 'Y100\n');
         serverConfig.webserver.rdsMode ? client.write('D1\n') : client.write('D0\n');
         return;
@@ -287,6 +291,7 @@ client.on('data', (data) => {
 });
 
 client.on('close', () => {
+  pluginsApi.setOutput(null);
   if(serverConfig.autoShutdown === false) {
     logWarn('Disconnected from xdrd. Attempting to reconnect.');
     setTimeout(function () {
@@ -572,7 +577,12 @@ pluginsWss.on('connection', (ws, request) => {
 });
 
 // Websocket register for /text, /audio and /chat paths
-httpServer.on('upgrade', (request, socket, head) => {
+httpServer.on('upgrade', (request, socket, head) => { 
+  const clientIp = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
+  if (serverConfig.webserver.banlist?.includes(clientIp)) {
+    socket.destroy();
+    return;
+  }
   if (request.url === '/text') {
     sessionMiddleware(request, {}, () => {
       wss.handleUpgrade(request, socket, head, (ws) => {
@@ -595,23 +605,6 @@ httpServer.on('upgrade', (request, socket, head) => {
     sessionMiddleware(request, {}, () => {
       rdsWss.handleUpgrade(request, socket, head, (ws) => {
         rdsWss.emit('connection', ws, request);
-
-        const clientIp = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
-        const userCommandHistory = {};
-        if (serverConfig.webserver.banlist?.includes(clientIp)) {
-          ws.close(1008, 'Banned IP');
-          return;
-        }
-
-        // Anti-spam tracking for each client
-        const userCommands = {};
-        let lastWarn = { time: 0 };
-
-        ws.on('message', function incoming(message) {
-          // Anti-spam
-          const command = helpers.antispamProtection(message, clientIp, ws, userCommands, lastWarn, userCommandHistory, '5', 'rds');
-        });
-
       });
     });
   } else if (request.url === '/data_plugins') {
@@ -648,3 +641,6 @@ helpers.checkIPv6Support((isIPv6Supported) => {
     startServer(ipv6Address, true);  // Start on IPv6
   } else startServer(ipv4Address, false); // Start only on IPv4
 });
+
+pluginsApi.registerServerContext({ wss, pluginsWss, httpServer, serverConfig });
+module.exports = { wss, pluginsWss, httpServer, serverConfig };
