@@ -28,7 +28,7 @@ function submitConfig() {
 function fetchConfig() {
   $.getJSON("./getData")
     .done(data => {
-      configData = data; 
+      configData = data;
       populateFields(configData);
       initVolumeSlider();
       initConnectionToggle();
@@ -38,9 +38,7 @@ function fetchConfig() {
 
 function populateFields(data, prefix = "") {
   $.each(data, (key, value) => {
-    if (value === null) {
-      value = ""; // Convert null to an empty string
-    }
+    if (value === null) value = ""; // Convert null to an empty string
 
     let id = `${prefix}${prefix ? "-" : ""}${key}`;
     const $element = $(`#${id}`);
@@ -50,16 +48,13 @@ function populateFields(data, prefix = "") {
         $element.find('option').each(function() {
           const $option = $(this);
           const dataName = $option.data('name');
-          if (value.includes(dataName)) {
-            $option.prop('selected', true);
-          } else {
-            $option.prop('selected', false); 
-          }
+          if (value.includes(dataName)) $option.prop('selected', true);
+          else $option.prop('selected', false);
         });
 
         $element.trigger('change');
       }
-      return; 
+      return;
     }
 
     if (typeof value === "object" && value !== null) {
@@ -68,11 +63,8 @@ function populateFields(data, prefix = "") {
           const arrayId = `${id}-${index + 1}`;
           const $arrayElement = $(`#${arrayId}`);
 
-          if ($arrayElement.length) {
-            $arrayElement.val(item);
-          } else {
-            console.log(`Element with id ${arrayId} not found`);
-          }
+          if ($arrayElement.length) $arrayElement.val(item);
+          else console.log(`Element with id ${arrayId} not found`);
         });
         return;
       } else {
@@ -92,9 +84,7 @@ function populateFields(data, prefix = "") {
       const $dropdownOption = $element.siblings('ul.options').find(`li[data-value="${value}"]`);
       $element.val($dropdownOption.length ? $dropdownOption.text() : value);
       $element.attr('data-value', value);
-    } else {
-      $element.val(value);
-    }
+    } else $element.val(value);
   });
 }
 
@@ -111,9 +101,7 @@ function updateConfigData(data, prefix = "") {
         if ($presetElement.length) {
           data[key].push($presetElement.val() || null); // Allow null if necessary
           index++;
-        } else {
-          break;
-        }
+        } else break;
       }
       return;
     }
@@ -123,16 +111,12 @@ function updateConfigData(data, prefix = "") {
       const $selectedOptions = $element.find('option:selected');
       $selectedOptions.each(function() {
         const dataName = $(this).attr('data-name');
-        if (dataName) {
-          data[key].push(dataName);
-        }
+        if (dataName) data[key].push(dataName);
       });
       return;
     }
 
-    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-      return updateConfigData(value, id);
-    }
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) return updateConfigData(value, id);
 
     if ($element.length) {
       const newValue = $element.attr("data-value") ?? $element.val() ?? null;

@@ -48,7 +48,7 @@
                 <h3 class="settings-heading">Tuner type</h3>
                 <p class="m-0">Settings a proper device type ensures that the correct interface and settings will load.</p>
                     <div class="panel-100 no-bg flex-center" style="max-width: 520px; margin: 10px auto 0;">
-                        <%- include('_components', { component: 'dropdown', id: 'device-selector', inputId: 'device', label: 'Device', cssClass: '', placeholder: 'TEF668x / TEA685x', 
+                        <%- include('_components', { component: 'dropdown', id: 'device-selector', inputId: 'device', label: 'Device', cssClass: '', placeholder: 'TEF668x / TEA685x',
                         options: tunerProfiles.map(profile => ({
                             value: profile.id,
                             label: profile.label
@@ -64,12 +64,12 @@
                         <span>
                             <span class="left-span">Direct</span>
                             <span class="right-span">TCP/IP</span>
-                        </span>											
+                        </span>
                     </label>
                 </div>
                 <div id="tuner-usb" class="top-25">
                     <p>It's time to choose your serial port.</p>
-                    
+
                     <div class="panel-100 no-bg flex-center">
                         <%- include('_components', {
                             component: 'dropdown',
@@ -82,7 +82,7 @@
                                 value: serialPort.path,
                                 label: `${serialPort.path} - ${serialPort.friendlyName}`
                             }))
-                        }) %> 
+                        }) %>
                     </div>
                 </div>
                 <div class="clearfix"></div>
@@ -103,7 +103,7 @@
                     <p class="m-0">In this section, we will set up the audio.<br>
                         Choose the audio port your tuner is connected to and desired audio settings here.</p>
                     <p class="text-gray">Recommended defaults have already been set for the audio quality, you can keep them as-is.</p>
-                    
+
                     <div class="panel-100 no-bg p-bottom-20 flex-container flex-center">
                         <%- include('_components', {
                             component: 'dropdown',
@@ -122,16 +122,16 @@
                                     label: `${device.name}`
                                 }))
                             ]
-                        }) %>  
-                        
-                        <%- include('_components', { component: 'dropdown', id: 'audio-channels-dropdown', inputId: 'audio-audioChannels', label: 'Audio channels', cssClass: '', placeholder: 'Stereo', 
+                        }) %>
+
+                        <%- include('_components', { component: 'dropdown', id: 'audio-channels-dropdown', inputId: 'audio-audioChannels', label: 'Audio channels', cssClass: '', placeholder: 'Stereo',
                         options: [
                             { value: '2', label: 'Stereo' },
                             { value: '1', label: 'Mono' }
                         ]
                         }) %>
-                        
-                        <%- include('_components', { component: 'dropdown', id: 'audio-quality-dropdown', inputId: 'audio-audioBitrate', label: 'Audio quality', cssClass: '', placeholder: '128kbps (standard)', 
+
+                        <%- include('_components', { component: 'dropdown', id: 'audio-quality-dropdown', inputId: 'audio-audioBitrate', label: 'Audio quality', cssClass: '', placeholder: '128kbps (standard)',
                         options: [
                             { value: '64k', label: '64kbps (lowest quality)' },
                             { value: '96k', label: '96kbps (low quality)' },
@@ -168,7 +168,7 @@
                     <br>
                     <label for="identification-tunerDesc" style="width: 100%;max-width: 768px; margin: auto;">Webserver description:</label>
                     <textarea id="identification-tunerDesc" name="webserver-desc" class="br-15" placeholder="Fill the server description here. You can put useful info here such as your antenna setup. You can use simple markdown." maxlength="255"></textarea>
-                    
+
                     <h3 class="settings-heading">Location</h3>
                     <p>Location info is useful for automatic identification of stations using RDS.</p>
                     <div class="panel-100 no-bg flex-container flex-center">

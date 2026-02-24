@@ -189,9 +189,7 @@ function loadInitialSettings() {
     if(signalParameter && !localStorage.getItem('signalUnit')) {
         signalSelector.find('input').val(signalSelector.find('.option[data-value="' + signalParameter + '"]').text());
         localStorage.setItem('signalUnit', signalParameter);
-    } else {
-        signalSelector.find('input').val(signalSelector.find('.option[data-value="' + savedUnit + '"]').text());
-    }
+    } else signalSelector.find('input').val(signalSelector.find('.option[data-value="' + savedUnit + '"]').text());
     
     signalSelector.on('click', '.option', (event) => {
         const selectedSignalUnit = $(event.target).data('value');

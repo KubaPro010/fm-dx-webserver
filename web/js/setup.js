@@ -27,9 +27,7 @@ function mapCreate() {
       zoom: 3,
       worldCopyJump: true
     });
-  } else {
-    map.setZoom(3).panTo([40, 0]);
-  }
+  } else map.setZoom(3).panTo([40, 0]);
 
   L.tileLayer(tilesURL, {
     attribution: mapAttrib,
@@ -272,9 +270,7 @@ function checkTunnelServers() {
 
           // If this li is the currently selected one, update input text too
           // Note: input.val() holds the label, so match by label is safer
-          if ($li.text() === selectedValue || server.value === selectedValue) {
-            $input.val(server.label);
-          }
+          if ($li.text() === selectedValue || server.value === selectedValue) $input.val(server.label);
         }
       });
     },

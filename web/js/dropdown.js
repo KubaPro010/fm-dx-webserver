@@ -23,38 +23,38 @@ $(document).ready(function() {
         
         switch($currentDropdown.attr('id')) {
             case 'data-ant':
-            socket.send("Z" + $(event.currentTarget).attr('data-value'));
-            resetRDS(getCurrentFreq()); // Reset RDS when change antenna input
-            break;
+                socket.send("Z" + $(event.currentTarget).attr('data-value'));
+                resetRDS(getCurrentFreq()); // Reset RDS when change antenna input
+                break;
             case 'data-ant-phone':
-            socket.send("Z" + $(event.currentTarget).attr('data-value'));
-            resetRDS(getCurrentFreq()); // Reset RDS when change antenna input
-            break;
+                socket.send("Z" + $(event.currentTarget).attr('data-value'));
+                resetRDS(getCurrentFreq()); // Reset RDS when change antenna input
+                break;
             case 'data-bw':
-            legacyBwValue = $(event.currentTarget).attr('data-value2') || "";
-            socket.send("F" + legacyBwValue);
-            socket.send("W" + $(event.currentTarget).attr('data-value'));
-            $currentDropdown.find('input').val($(event.currentTarget).text());
-            break;
+                legacyBwValue = $(event.currentTarget).attr('data-value2') || "";
+                socket.send("F" + legacyBwValue);
+                socket.send("W" + $(event.currentTarget).attr('data-value'));
+                $currentDropdown.find('input').val($(event.currentTarget).text());
+                break;
             case 'data-bw-phone':
-            legacyBwValue = $(event.currentTarget).attr('data-value2') || "";
-            socket.send("F" + legacyBwValue);
-            socket.send("W" + $(event.currentTarget).attr('data-value'));
-            $currentDropdown.find('input').val($(event.currentTarget).text());
-            break;
+                legacyBwValue = $(event.currentTarget).attr('data-value2') || "";
+                socket.send("F" + legacyBwValue);
+                socket.send("W" + $(event.currentTarget).attr('data-value'));
+                $currentDropdown.find('input').val($(event.currentTarget).text());
+                break;
             case 'data-agc':
-            socket.send("A" + $(event.currentTarget).attr('data-value'));
-            $currentDropdown.find('input').val($(event.currentTarget).text());
-            break;
+                socket.send("A" + $(event.currentTarget).attr('data-value'));
+                $currentDropdown.find('input').val($(event.currentTarget).text());
+                break;
             case 'data-agc-phone':
-            socket.send("A" + $(event.currentTarget).attr('data-value'));
-            $currentDropdown.find('input').val($(event.currentTarget).text());
-            break;
+                socket.send("A" + $(event.currentTarget).attr('data-value'));
+                $currentDropdown.find('input').val($(event.currentTarget).text());
+                break;
             default:
-            $currentDropdown.find('input')
-            .val($(event.currentTarget).text())
-            .attr('data-value', $(event.currentTarget).data('value')); 
-            break;
+                $currentDropdown.find('input')
+                .val($(event.currentTarget).text())
+                .attr('data-value', $(event.currentTarget).data('value')); 
+                break;
         }
         
         // Use setTimeout to delay class removal
@@ -80,24 +80,24 @@ $(document).ready(function() {
         const $options = currentDropdown.find('.option');
         switch (event.key) {
             case 'ArrowDown':
-            event.preventDefault();
-            currentIndex = (currentIndex + 1) % $options.length;
-            $options.eq(currentIndex).focus();
-            break;
+                event.preventDefault();
+                currentIndex = (currentIndex + 1) % $options.length;
+                $options.eq(currentIndex).focus();
+                break;
             case 'ArrowUp':
-            event.preventDefault();
-            currentIndex = (currentIndex - 1 + $options.length) % $options.length;
-            $options.eq(currentIndex).focus();
-            break;
+                event.preventDefault();
+                currentIndex = (currentIndex - 1 + $options.length) % $options.length;
+                $options.eq(currentIndex).focus();
+                break;
             case 'Enter':
-            event.preventDefault();
-            $options.eq(currentIndex).click();
-            break;
+                event.preventDefault();
+                $options.eq(currentIndex).click();
+                break;
             case 'Escape':
-            currentDropdown.removeClass('opened');
-            currentDropdown = null;
-            currentIndex = -1;
-            break;
+                currentDropdown.removeClass('opened');
+                currentDropdown = null;
+                currentIndex = -1;
+                break;
         }
     };
     
@@ -106,9 +106,7 @@ $(document).ready(function() {
     $listOfOptions.on('click', selectOption);
     $dropdowns.on('click', 'input', toggleDropdown);
     $dropdowns.on('keydown', 'input', function(event) {
-        if (event.key === 'Enter') {
-            toggleDropdown(event);
-        }
+        if (event.key === 'Enter') toggleDropdown(event);
     });
     $dropdowns.on('keydown', '.option', navigateOptions);
     

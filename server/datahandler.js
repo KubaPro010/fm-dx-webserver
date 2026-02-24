@@ -193,8 +193,7 @@ function handleData(wss, receivedData, rdsWss) {
           data += (((errors & 0x03) == 0) ? modifiedData.slice(12, 16) : '----');
 
           const newDataString = "G:\r\n" + data + "\r\n\r\n";
-          const finalBuffer = Buffer.from(newDataString, 'utf-8');
-          client.send(finalBuffer);
+          client.send(newDataString);
         });
 
         rdsdec.decodeGroup(parseInt(modifiedData.slice(0, 4), 16), parseInt(modifiedData.slice(4, 8), 16), parseInt(modifiedData.slice(8, 12), 16), parseInt(modifiedData.slice(12, 16), 16));

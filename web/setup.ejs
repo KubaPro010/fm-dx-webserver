@@ -109,7 +109,7 @@
                                                 <a href="https://dnschecker.org/ip-location.php?ip=<%= user.ip.replace('::ffff:', '') %>" target="_blank">
                                                   <%= user.ip.replace('::ffff:', '') %>
                                                 </a>
-                                            </td>                                              
+                                            </td>
                                             <td><%= user.location %></td>
                                             <td><%= user.time %></td>
                                             <td><a href="./kick?ip=<%= user.ip %>">Kick</a></td>
@@ -121,10 +121,10 @@
                                     </tr>
                                 <% } %>
                             </tbody>
-                        </table>    
+                        </table>
                     </div>
                 </div>
-                    
+
                 <div class="flex-container">
                     <div class="panel-100-real p-bottom-20">
                         <h3>Quick settings</h3>
@@ -132,7 +132,7 @@
                             <%- include('_components', {component: 'checkbox', cssClass: '', label: 'Unlocked Tuner', id: 'publicTuner'}) %>
                             <%- include('_components', {component: 'checkbox', cssClass: '', label: 'Admin lock', id: 'lockToAdmin'}) %><br>
                         </div>
-        
+
                         <%- include('_components', {component: 'text', cssClass: 'w-150 br-15', placeholder: '', label: 'Tune password', id: 'password-tunePass', password: true}) %>
                         <%- include('_components', {component: 'text', cssClass: 'w-150 br-15', placeholder: '', label: 'Admin password', id: 'password-adminPass', password: true}) %><br>
                     </div>
@@ -156,7 +156,7 @@
 
             <div class="panel-full tab-content no-bg m-0" id="audio" role="tabpanel">
                 <h2>Audio settings</h2>
-                
+
                 <div class="flex-container contains-dropdown">
                         <div class="panel-33 p-bottom-20">
                             <h3>Device</h3>
@@ -181,14 +181,14 @@
                                         label: `${device.name}`
                                     }))
                                 ]
-                            }) %>   
+                            }) %>
                         </div>
                         <div class="panel-33 p-bottom-20">
                             <h3>Channels</h3>
                             <p>Audio channel count.<br>
                                 <span class="text-gray">Choose between Mono / Stereo.</span>
                             </p>
-                            <%- include('_components', { component: 'dropdown', id: 'audio-channels-dropdown', inputId: 'audio-audioChannels', label: 'Audio channels', cssClass: '', placeholder: 'Stereo', 
+                            <%- include('_components', { component: 'dropdown', id: 'audio-channels-dropdown', inputId: 'audio-audioChannels', label: 'Audio channels', cssClass: '', placeholder: 'Stereo',
                             options: [
                                 { value: '2', label: 'Stereo' },
                                 { value: '1', label: 'Mono' }
@@ -200,7 +200,7 @@
                             <p>The bitrate of the mp3 audio.<br>
                                 <span class="text-gray">Minimum: 64 Kbps • Maximum: 320 Kbps</span>
                             </p>
-                            <%- include('_components', { component: 'dropdown', id: 'audio-quality-dropdown', inputId: 'audio-audioBitrate', label: 'Audio quality', cssClass: '', placeholder: '128kbps (standard)', 
+                            <%- include('_components', { component: 'dropdown', id: 'audio-quality-dropdown', inputId: 'audio-audioBitrate', label: 'Audio quality', cssClass: '', placeholder: '128kbps (standard)',
                             options: [
                                 { value: '64k', label: '64kbps (lowest quality)' },
                                 { value: '96k', label: '96kbps (low quality)' },
@@ -251,11 +251,11 @@
                     </div>
                     <div class="panel-50 p-bottom-20">
                             <h3>Design</h3>
-                            <h4>Background image</h4>  
-                            <%- include('_components', {component: 'text', cssClass: 'br-15', placeholder: 'Direct image link', label: 'Image link', id: 'webserver-bgImage'}) %><br> 
+                            <h4>Background image</h4>
+                            <%- include('_components', {component: 'text', cssClass: 'br-15', placeholder: 'Direct image link', label: 'Image link', id: 'webserver-bgImage'}) %><br>
 
                             <h4 class="top-25">Themes</h4>
-                            <%- include('_components', { component: 'dropdown', id: 'server-theme-selector', inputId: 'webserver-defaultTheme', label: 'Default server theme', cssClass: '', placeholder: 'Default', 
+                            <%- include('_components', { component: 'dropdown', id: 'server-theme-selector', inputId: 'webserver-defaultTheme', label: 'Default server theme', cssClass: '', placeholder: 'Default',
                             options: [
                                 { value: 'theme1', label: 'Mint' },
                                 { value: 'theme2', label: 'Cappuccino' },
@@ -280,17 +280,17 @@
                                 <%- include('_components', {component: 'checkbox', cssClass: '', label: 'Antenna 1', id: 'antennas-ant1-enabled'}) %>
                                 <%- include('_components', {component: 'text', cssClass: 'w-100 br-15', placeholder: 'Ant A', label: 'Antenna 1 name', id: 'antennas-ant1-name'}) %><br>
                             </div>
-    
+
                             <div class="flex-container flex-phone flex-column bottom-20" style="margin-left: 15px; margin-right: 15px;">
                             <%- include('_components', {component: 'checkbox', cssClass: 'top-25', label: 'Antenna 2', id: 'antennas-ant2-enabled'}) %>
                             <%- include('_components', {component: 'text', cssClass: 'w-100 br-15', placeholder: 'Ant B', label: 'Antenna 2 name', id: 'antennas-ant2-name'}) %><br>
                             </div>
-    
+
                             <div class="flex-container flex-phone flex-column bottom-20" style="margin-left: 15px; margin-right: 15px;">
                             <%- include('_components', {component: 'checkbox', cssClass: '', label: 'Antenna 3', id: 'antennas-ant3-enabled'}) %>
                             <%- include('_components', {component: 'text', cssClass: 'w-100 br-15', placeholder: 'Ant C', label: 'Antenna 3 name', id: 'antennas-ant3-name'}) %><br>
                             </div>
-    
+
                             <div class="flex-container flex-phone flex-column bottom-20" style="margin-left: 15px; margin-right: 15px;">
                             <%- include('_components', {component: 'checkbox', cssClass: '', label: 'Antenna 4', id: 'antennas-ant4-enabled'}) %>
                             <%- include('_components', {component: 'text', cssClass: 'w-100 br-15', placeholder: 'Ant D', label: 'Antenna 4 name', id: 'antennas-ant4-name'}) %><br>
@@ -337,7 +337,7 @@
                     <div class="panel-50 p-bottom-20" style="padding-left: 20px; padding-right: 20px; padding-bottom: 80px;">
                         <h3>Transmitter Search Algorithm</h3>
                         <p>Different modes may help with more accurate transmitter identification depending on your region.</p>
-                        <%- include('_components', { component: 'dropdown', id: 'server-tx-id-algo', inputId: 'webserver-txIdAlgorithm', label: 'Transmitter ID Algorithm', cssClass: '', placeholder: 'Algorithm 1', 
+                        <%- include('_components', { component: 'dropdown', id: 'server-tx-id-algo', inputId: 'webserver-txIdAlgorithm', label: 'Transmitter ID Algorithm', cssClass: '', placeholder: 'Algorithm 1',
                         options: [
                             { value: '0', label: 'Algorithm 1' },
                             { value: '1', label: 'Algorithm 2' },
@@ -354,7 +354,7 @@
                 <div class="panel-100 p-bottom-20 contains-dropdown" style="z-index: 991;">
                     <h3>Device type</h3>
                     <div class="flex-center" style="max-width: 520px; margin: 10px auto 0;">
-                        <%- include('_components', { component: 'dropdown', id: 'device-selector', inputId: 'device', label: 'Device', cssClass: '', placeholder: 'TEF668x / TEA685x', 
+                        <%- include('_components', { component: 'dropdown', id: 'device-selector', inputId: 'device', label: 'Device', cssClass: '', placeholder: 'TEF668x / TEA685x',
                             options: tunerProfiles.map(profile => ({
                                 value: profile.id,
                                 label: profile.label
@@ -374,7 +374,7 @@
                             <span>
                                 <span class="left-span">Direct</span>
                                 <span class="right-span">TCP/IP</span>
-                            </span>											
+                            </span>
                         </label>
                     </div>
                     <div id="tuner-usb">
@@ -390,9 +390,9 @@
                                 value: serialPort.path,
                                 label: `${serialPort.path} - ${serialPort.friendlyName}`
                             }))
-                        }) %>                        
+                        }) %>
                     </div>
-    
+
                     <div id="tuner-wireless">
                         <p class="text-gray">If you are connecting your tuner <strong>wirelessly</strong>, enter the tuner IP. <br> If you use <strong>xdrd</strong>, use 127.0.0.1 as your IP.</p>
                         <%- include('_components', {component: 'text', cssClass: 'w-150 br-15', label: 'xdrd IP address', id: 'xdrd-xdrdIp'}) %>
@@ -409,7 +409,7 @@
                             <input type="range" id="audio-startupVolume" min="0" max="1" step="0.01" value="1" aria-label="Startup Volume slider">
                         </div>
                         <h4 class="top-10 text-gray" id="volume-percentage-value"></h4>
-    
+
                         <hr>
                         <h4 class="bottom-20">Default frequency</h4>
                         <%- include('_components', {component: 'checkbox', cssClass: '', label: 'Default frequency for first client', id: 'enableDefaultFreq'}) %><br>
@@ -468,7 +468,7 @@
                 <div class="flex-container">
                     <div class="panel-50 p-bottom-20">
                         <h3>Basic info</h3>
-                        
+
                         <p>Set your tuner name and description here.<br>This info will be visible to anyone who tunes in. </p>
                         <div class="panel-full no-bg" style="padding-left: 20px; padding-right: 20px;">
                             <label for="identification-tunerName" style="width: 100%;max-width: 768px; margin:auto;">Webserver name:</label>
@@ -486,7 +486,7 @@
                         <%- include('_components', {component: 'checkbox', cssClass: '', label: 'Broadcast to map', id: 'identification-broadcastTuner'}) %><br>
                         <%- include('_components', {component: 'text', cssClass: 'br-15', placeholder: 'Your e-mail or Discord...', label: 'Owner contact', id: 'identification-contact'}) %>
                         <%- include('_components', {component: 'text', cssClass: 'br-15', label: 'Proxy address', id: 'identification-proxyIp'}) %>
-        
+
                         <p>Check your tuner at <strong><a href="https://servers.fmdx.org" target="_blank" class="color-4">servers.fmdx.org</a></strong>.</p>
                         <p class="text-small text-gray">By activating the <strong>Broadcast to map</strong> option,<br>you agree to the <a href="https://fmdx.org/projects/webserver.php#rules" target="_blank">Terms of Service</a>.</p>
                     </div>
@@ -498,7 +498,7 @@
 
                     <%- include('_components', {component: 'text', cssClass: 'w-150 br-15', placeholder: '', label: 'Latitude', id: 'identification-lat'}) %>
                     <%- include('_components', {component: 'text', cssClass: 'w-150 br-15', placeholder: '', label: 'Longitude', id: 'identification-lon'}) %>
-                    
+
                     <div id="map"></div>
                     <br>
                 </div>
@@ -508,7 +508,7 @@
                 <h2>User management</h2>
                 <div class="panel-100">
                     <h3>Chat options</h3>
-                    <%- include('_components', {component: 'checkbox', cssClass: '', label: 'Chat', id: 'webserver-chatEnabled'}) %>     
+                    <%- include('_components', {component: 'checkbox', cssClass: '', label: 'Chat', id: 'webserver-chatEnabled'}) %>
                 </div>
 
                 <div class="panel-100 p-bottom-20">
@@ -573,33 +573,33 @@
                         <p>These settings will be applied after a server launch or restart.</p>
                         <div class="flex-container flex-center p-20">
                             <% if (device === 'tef') { %>
-                                <%- include('_components', { component: 'dropdown', id: 'ceqStartup-dropdown', inputId: 'ceqStartup', label: 'cEQ', cssClass: '', placeholder: 'Disabled', 
+                                <%- include('_components', { component: 'dropdown', id: 'ceqStartup-dropdown', inputId: 'ceqStartup', label: 'cEQ', cssClass: '', placeholder: 'Disabled',
                                     options: [
                                         { value: '0', label: 'Disabled' },
                                         { value: '1', label: 'Enabled' },
                                     ]
                                 }) %><br>
-                                <%- include('_components', { component: 'dropdown', id: 'imsStartup-dropdown', inputId: 'imsStartup', label: 'iMS', cssClass: '', placeholder: 'Disabled', 
+                                <%- include('_components', { component: 'dropdown', id: 'imsStartup-dropdown', inputId: 'imsStartup', label: 'iMS', cssClass: '', placeholder: 'Disabled',
                                     options: [
                                         { value: '0', label: 'Disabled' },
                                         { value: '1', label: 'Enabled' },
                                     ]
                                 }) %><br>
                             <% } else if (device === 'xdr') { %>
-                                <%- include('_components', { component: 'dropdown', id: 'rfStartup-dropdown', inputId: 'ceqStartup', label: 'RF+', cssClass: '', placeholder: 'Disabled', 
+                                <%- include('_components', { component: 'dropdown', id: 'rfStartup-dropdown', inputId: 'ceqStartup', label: 'RF+', cssClass: '', placeholder: 'Disabled',
                                     options: [
                                         { value: '0', label: 'Disabled' },
                                         { value: '1', label: 'Enabled' },
                                     ]
                                 }) %><br>
-                                <%- include('_components', { component: 'dropdown', id: 'ifStartup-dropdown', inputId: 'imsStartup', label: 'IF+', cssClass: '', placeholder: 'Disabled', 
+                                <%- include('_components', { component: 'dropdown', id: 'ifStartup-dropdown', inputId: 'imsStartup', label: 'IF+', cssClass: '', placeholder: 'Disabled',
                                     options: [
                                         { value: '0', label: 'Disabled' },
                                         { value: '1', label: 'Enabled' },
                                     ]
                                 }) %><br>
                             <% } %>
-                            <%- include('_components', { component: 'dropdown', id: 'stereoStartup-dropdown', inputId: 'stereoStartup', label: 'Stereo Mode', cssClass: '', placeholder: 'Stereo (Default)', 
+                            <%- include('_components', { component: 'dropdown', id: 'stereoStartup-dropdown', inputId: 'stereoStartup', label: 'Stereo Mode', cssClass: '', placeholder: 'Stereo (Default)',
                                 options: [
                                     { value: '0', label: 'Stereo (Default)' },
                                     { value: '1', label: 'Mono' },
@@ -607,7 +607,7 @@
                             }) %><br>
                             </div>
                             <div class="panel-100-real p-bottom-20 no-bg">
-                            <%- include('_components', { component: 'dropdown', id: 'antennaStartup-dropdown', inputId: 'antennaStartup', label: 'Antenna', cssClass: '', placeholder: 'Antenna 0 (Default)', 
+                            <%- include('_components', { component: 'dropdown', id: 'antennaStartup-dropdown', inputId: 'antennaStartup', label: 'Antenna', cssClass: '', placeholder: 'Antenna 0 (Default)',
                                 options: [
                                     { value: '0', label: 'Antenna 0 (Default)' },
                                     { value: '1', label: 'Antenna 1' },
@@ -623,21 +623,21 @@
                         <h3>Empty server defaults</h3>
                         <p>These settings will apply once the last user disconnects from the server, so the server can be ready for a new user with default settings.</p>
                         <div class="flex-container flex-center p-20">
-                            <%- include('_components', { component: 'dropdown', id: 'bwAutoNoUsers-dropdown', inputId: 'bwAutoNoUsers', label: 'Auto BW', cssClass: '', placeholder: 'Unchanged', 
+                            <%- include('_components', { component: 'dropdown', id: 'bwAutoNoUsers-dropdown', inputId: 'bwAutoNoUsers', label: 'Auto BW', cssClass: '', placeholder: 'Unchanged',
                                 options: [
                                     { value: '0', label: 'Unchanged' },
                                     { value: '1', label: 'Enabled' },
                                 ]
                             }) %><br>
                             <% if (device === 'tef') { %>
-                                <%- include('_components', { component: 'dropdown', id: 'ceqNoUsers-dropdown', inputId: 'ceqNoUsers', label: 'cEQ', cssClass: '', placeholder: 'Unchanged', 
+                                <%- include('_components', { component: 'dropdown', id: 'ceqNoUsers-dropdown', inputId: 'ceqNoUsers', label: 'cEQ', cssClass: '', placeholder: 'Unchanged',
                                     options: [
                                         { value: '0', label: 'Unchanged' },
                                         { value: '1', label: 'Disabled' },
                                         { value: '2', label: 'Enabled' },
                                     ]
                                 }) %><br>
-                                <%- include('_components', { component: 'dropdown', id: 'imsNoUsers-dropdown', inputId: 'imsNoUsers', label: 'iMS', cssClass: '', placeholder: 'Unchanged', 
+                                <%- include('_components', { component: 'dropdown', id: 'imsNoUsers-dropdown', inputId: 'imsNoUsers', label: 'iMS', cssClass: '', placeholder: 'Unchanged',
                                     options: [
                                         { value: '0', label: 'Unchanged' },
                                         { value: '1', label: 'Disabled' },
@@ -645,14 +645,14 @@
                                     ]
                                 }) %><br>
                             <% } else if (device === 'xdr') { %>
-                                <%- include('_components', { component: 'dropdown', id: 'rfNoUsers-dropdown', inputId: 'ceqNoUsers', label: 'RF+', cssClass: '', placeholder: 'Unchanged', 
+                                <%- include('_components', { component: 'dropdown', id: 'rfNoUsers-dropdown', inputId: 'ceqNoUsers', label: 'RF+', cssClass: '', placeholder: 'Unchanged',
                                     options: [
                                         { value: '0', label: 'Unchanged' },
                                         { value: '1', label: 'Disabled' },
                                         { value: '2', label: 'Enabled' },
                                     ]
                                 }) %><br>
-                                <%- include('_components', { component: 'dropdown', id: 'ifNoUsers-dropdown', inputId: 'imsNoUsers', label: 'IF+', cssClass: '', placeholder: 'Unchanged', 
+                                <%- include('_components', { component: 'dropdown', id: 'ifNoUsers-dropdown', inputId: 'imsNoUsers', label: 'IF+', cssClass: '', placeholder: 'Unchanged',
                                     options: [
                                         { value: '0', label: 'Unchanged' },
                                         { value: '1', label: 'Disabled' },
@@ -660,7 +660,7 @@
                                     ]
                                 }) %><br>
                             <% } %>
-                            <%- include('_components', { component: 'dropdown', id: 'stereoNoUsers-dropdown', inputId: 'stereoNoUsers', label: 'Stereo Mode', cssClass: '', placeholder: 'Unchanged', 
+                            <%- include('_components', { component: 'dropdown', id: 'stereoNoUsers-dropdown', inputId: 'stereoNoUsers', label: 'Stereo Mode', cssClass: '', placeholder: 'Unchanged',
                                 options: [
                                     { value: '0', label: 'Unchanged' },
                                     { value: '1', label: 'Stereo' },
@@ -670,7 +670,7 @@
                             </div>
                             <div class="panel-100-real p-bottom-20 no-bg">
                             <%- include('_components', {component: 'checkbox', cssClass: '', label: 'Delayed Antenna Change', id: 'antennaNoUsersDelay'}) %><br>
-                            <%- include('_components', { component: 'dropdown', id: 'antennaNoUsers-dropdown', inputId: 'antennaNoUsers', label: 'Antenna', cssClass: '', placeholder: 'Unchanged', 
+                            <%- include('_components', { component: 'dropdown', id: 'antennaNoUsers-dropdown', inputId: 'antennaNoUsers', label: 'Antenna', cssClass: '', placeholder: 'Unchanged',
                                 options: [
                                     { value: '0', label: 'Unchanged' },
                                     { value: '1', label: 'Antenna 0' },
@@ -705,7 +705,7 @@
                     <p>You can also get an tunnel from kuba201 discord, one of the contributors of this version of the application.</p>
                     <h4>Main tunnel settings</h4>
                     <%- include('_components', {component: 'checkbox', cssClass: 'm-right-10', label: 'Enable tunnel', id: 'tunnel-enabled'}) %><br>
-                    <%- include('_components', { component: 'dropdown', id: 'tunnel-regionSelect', inputId: 'tunnel-region', label: 'Official server region', cssClass: '', placeholder: 'Europe', 
+                    <%- include('_components', { component: 'dropdown', id: 'tunnel-regionSelect', inputId: 'tunnel-region', label: 'Official server region', cssClass: '', placeholder: 'Europe',
                     options: [
                         { value: 'eu', label: 'Europe' },
                         { value: 'us', label: 'Americas' },

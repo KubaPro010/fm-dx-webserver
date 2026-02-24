@@ -27,11 +27,8 @@ function destroyStream() {
 
 function OnConnectivityCallback(isConnected) {
     console.log("Connectivity changed:", isConnected);
-    if (Stream) {
-        Stream.Volume = $('#volumeSlider').val();
-    } else {
-        console.warn("Stream is not initialized.");
-    }
+    if (Stream) Stream.Volume = $('#volumeSlider').val();
+    else console.warn("Stream is not initialized.");
 }
 
 
@@ -44,18 +41,14 @@ function OnPlayButtonClick(_ev) {
         shouldReconnect = false;
         destroyStream();
         $playbutton.find('.fa-solid').toggleClass('fa-stop fa-play');
-        if (isAppleiOS && 'audioSession' in navigator) {
-            navigator.audioSession.type = "none";
-        }
+        if (isAppleiOS && 'audioSession' in navigator) navigator.audioSession.type = "none";
     } else {
         console.log("Starting stream...");
         shouldReconnect = true;
         createStream();
         Stream.Start();
         $playbutton.find('.fa-solid').toggleClass('fa-play fa-stop');
-        if (isAppleiOS && 'audioSession' in navigator) {
-            navigator.audioSession.type = "playback";
-        }
+        if (isAppleiOS && 'audioSession' in navigator) navigator.audioSession.type = "playback";
     }
 
     $playbutton.addClass('bg-gray').prop('disabled', true);
@@ -70,9 +63,7 @@ function updateVolume() {
         newVolumeGlobal = newVolume;
         console.log("Volume updated to:", newVolume);
         Stream.Volume = newVolume;
-    } else {
-        console.warn("Stream is not initialized.");
-    }
+    } else console.warn("Stream is not initialized.");
 }
 
 $(document).ready(Init);
