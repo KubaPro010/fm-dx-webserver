@@ -185,18 +185,21 @@ function handleData(wss, receivedData, rdsWss) {
           modifiedData += errorsNew.toString(16).padStart(2, '0');
         }
 
+        const a = modifiedData.slice(0, 4);
+        const b = modifiedData.slice(4, 8);
+        const c = modifiedData.slice(8, 12);
+        const d = modifiedData.slice(12, 16);
+        const errors = parseInt(modifiedData.slice(-2), 16);
         rdsWss.clients.forEach((client) => {
-          const errors = parseInt(modifiedData.slice(-2), 16);
-          let data = (((errors & 0xC0) == 0) ? modifiedData.slice(0, 4) : '----');
-          data += (((errors & 0x30) == 0) ? modifiedData.slice(4, 8) : '----');
-          data += (((errors & 0x0C) == 0) ? modifiedData.slice(8, 12) : '----');
-          data += (((errors & 0x03) == 0) ? modifiedData.slice(12, 16) : '----');
+          let data = ((((errors >> 6) & 3) < 3) ? a : '----');
+          data += ((((errors >> 4) & 3) < 3) ? b : '----');
+          data += ((((errors >> 2) & 3) < 3) ? c : '----');
+          data += (((errors & 3) < 3) ? d : '----');
 
-          const newDataString = "G:\r\n" + data + "\r\n\r\n";
-          client.send(newDataString);
+          client.send("G:\r\n" + data + "\r\n\r\n");
         });
 
-        rdsdec.decodeGroup(parseInt(modifiedData.slice(0, 4), 16), parseInt(modifiedData.slice(4, 8), 16), parseInt(modifiedData.slice(8, 12), 16), parseInt(modifiedData.slice(12, 16), 16));
+        rdsdec.decodeGroup(parseInt(a, 16), parseInt(b, 16), parseInt(c, 16), parseInt(d, 16), errors);
         legacyRdsPiBuffer = null;
         break;
     }

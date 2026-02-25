@@ -36,9 +36,9 @@ class RDSDecoder {
   }
 
   decodeGroup(blockA, blockB, blockC, blockD, error) {
-    const a_error = (error & 0xC0) >> 6;
-    const b_error = (error & 0x30) >> 4;
-    const c_error = (error & 0xc) >> 2;
+    const a_error = (error >> 6) & 3;
+    const b_error = (error >> 4) & 3;
+    const c_error = (error >> 2) & 3;
     const d_error = error & 3;
 
     if(this.last_pi_error > a_error) {
@@ -46,7 +46,7 @@ class RDSDecoder {
         this.last_pi_error = a_error;
     }
 
-    if(b_error != 0) return; // B chooses what group this is, if this has errors, we are screwed
+    if(b_error !== 0) return; // B chooses what group this is, if this has errors, we are screwed
 
     const group = (blockB >> 12) & 0xF;
     const version = (blockB >> 11) & 0x1;

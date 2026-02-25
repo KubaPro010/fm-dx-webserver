@@ -1,7 +1,7 @@
 /* Libraries / Imports */
 const fs = require('fs');
 const path = require('path');
-const { logDebug, logError, logInfo, logWarn } = require('./console');
+const { logError, logInfo } = require('./console');
 
 let configName = 'config';
 
@@ -135,9 +135,7 @@ function addMissingFields(target, source) {
     if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key])) {
       if (!target[key]) target[key] = {}; // Create missing object
       addMissingFields(target[key], source[key]); // Recursively add missing fields
-    } else {
-      if (target[key] === undefined) target[key] = source[key]; // Add missing fields only
-    }
+    } else if(target[key] === undefined) target[key] = source[key]; // Add missing fields only
   });
 }
 
