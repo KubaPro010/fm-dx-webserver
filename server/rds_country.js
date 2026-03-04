@@ -451,12 +451,12 @@ const rdsEccA0A6Lut = [
   [
     "USA/VI/PR", "USA/VI/PR", "USA/VI/PR", "USA/VI/PR", "USA/VI/PR",
     "USA/VI/PR", "USA/VI/PR", "USA/VI/PR", "USA/VI/PR", "USA/VI/PR",
-    "USA/VI/PR", null, "USA/VI/PR", "USA/VI/PR", null
+    "USA/VI/PR", "", "USA/VI/PR", "USA/VI/PR", ""
   ],
   // A1
   [
-    null, null, null, null, null,
-    null, null, null, null, null,
+    "", "", "", "", "",
+    "", "", "", "", "",
     "Canada", "Canada", "Canada", "Canada", "Greenland"
   ],
   // A2
@@ -467,27 +467,27 @@ const rdsEccA0A6Lut = [
   ],
   // A3
   [
-    "Bolivia", "Colombia", "Jamaica", "Martinique", null,
-    "Paraguay", "Nicaragua", null, "Panama", "Dominica",
+    "Bolivia", "Colombia", "Jamaica", "Martinique", "",
+    "Paraguay", "Nicaragua", "", "Panama", "Dominica",
     "Dominican Republic", "Chile", "Grenada", "Turks and Caicos islands", "Guyana"
   ],
   // A4
   [
-    "Guatemala", "Honduras", "Aruba", null, "Montserrat",
+    "Guatemala", "Honduras", "Aruba", "", "Montserrat",
     "Trinidad and Tobago", "Peru", "Suriname", "Uruguay", "St. Kitts",
     "St. Lucia", "El Salvador", "Haiti", "Venezuela", "Virgin Islands"
   ],
   // A5
   [
-    null, null, null, null, null,
-    null, null, null, null, null,
+    "", "", "", "", "",
+    "", "", "", "", "",
     "Mexico", "St. Vincent", "Mexico", "Mexico", "Mexico"
   ],
   // A6
   [
-    null, null, null, null, null,
-    null, null, null, null, null,
-    null, null, null, null, "St. Pierre and Miquelon"
+    "", "", "", "", "",
+    "", "", "", "", "",
+    "", "", "", "", "St. Pierre and Miquelon"
   ]
 ];
 
@@ -508,19 +508,19 @@ const rdsEccD0D4Lut = [
   [
     "Sierra Leone", "Zimbabwe", "Mozambique", "Uganda", "Swaziland",
     "Kenya", "Somalia", "Niger", "Chad", "Guinea-Bissau",
-    "DR Congo", "Cote d'Ivoire", null, "Zambia", "Eritrea"
+    "DR Congo", "Cote d'Ivoire", "", "Zambia", "Eritrea"
   ],
   // D3
   [
-    null, null, "Western Sahara", "Cabinda", "Rwanda",
-    "Lesotho", null, "Seychelles", null, "Mauritius",
-    null, "Sudan", null, null, null
+    "", "", "Western Sahara", "Cabinda", "Rwanda",
+    "Lesotho", "", "Seychelles", "", "Mauritius",
+    "", "Sudan", "", "", ""
   ],
   // D4
   [
-    null, null, null, null, null,
-    null, null, null, null, "South Sudan",
-    null, null, null, null, null
+    "", "", "", "", "",
+    "", "", "", "", "South Sudan",
+    "", "", "", "", ""
   ]
 ];
 
@@ -529,7 +529,7 @@ const rdsEccE0E5Lut = [
   [
     "Germany", "Algeria", "Andorra", "Israel", "Italy",
     "Belgium", "Russia", "Palestine", "Albania", "Austria",
-    "Hungary", "Malta", "Germany", null, "Egypt"
+    "Hungary", "Malta", "Germany", "", "Egypt"
   ],
   // E1
   [
@@ -540,26 +540,26 @@ const rdsEccE0E5Lut = [
   // E2
   [
     "Morocco", "Czechia", "Poland", "Vatican", "Slovakia",
-    "Syria", "Tunisia", null, "Liechtenstein", "Iceland",
+    "Syria", "Tunisia", "", "Liechtenstein", "Iceland",
     "Monaco", "Lithuania", "Serbia", "Spain", "Norway"
   ],
   // E3
   [
-    "Montenegro", "Ireland", "Turkey", null, "Tajikistan",
-    null, null, "Netherlands", "Latvia", "Lebanon",
+    "Montenegro", "Ireland", "Turkey", "", "Tajikistan",
+    "", "", "Netherlands", "Latvia", "Lebanon",
     "Azerbaijan", "Croatia", "Kazakhstan", "Sweden", "Belarus"
   ],
   // E4
   [
-    "Moldova", "Estonia", "Macedonia", null, null,
+    "Moldova", "Estonia", "Macedonia", "", "",
     "Ukraine", "Kosovo", "Portugal", "Slovenia", "Armenia",
-    "Uzbekistan", "Georgia", null, "Turkmenistan", "Bosnia Herzegovina"
+    "Uzbekistan", "Georgia", "", "Turkmenistan", "Bosnia Herzegovina"
   ],
   // E5
   [
-    null, null, "Kyrgyzstan", null, null,
-    null, null, null, null, null,
-    null, null, null, null, null
+    "", "", "Kyrgyzstan", "", "",
+    "", "", "", "", "",
+    "", "", "", "", ""
   ]
 ];
 
@@ -584,15 +584,15 @@ const rdsEccF0F4Lut = [
   ],
   // F3
   [
-    "Laos", "Thailand", "Tonga", null, null,
-    null, null, "China", "Papua New Guinea", null,
-    "Yemen", null, null, "Micronesia", "Mongolia"
+    "Laos", "Thailand", "Tonga", "", "",
+    "", "", "China", "Papua New Guinea", "",
+    "Yemen", "", "", "Micronesia", "Mongolia"
   ],
   // F4
   [
-    null, null, null, null, null,
-    null, null, null, "China", null,
-    "Marshall Islands", null, null, null, null
+    "", "", "", "", "",
+    "", "", "", "China", "",
+    "Marshall Islands", "", "", "", ""
   ]
 ];
 
