@@ -31,16 +31,16 @@ var dataToSend = {
   agc: 0,
   ant: 0,
   txInfo: {
-    tx: '',
-    pol: '',
-    erp: '',
+    tx: '', // Name
+    pol: '', // Polarisation
+    erp: '', // Power
     city: '',
-    itu: '',
-    dist: '',
-    azi: '',
-    id: '',
+    itu: '', // Country
+    dist: '', // Distance
+    azi: '', // Azimuth
+    id: 0, // Some number
     reg: false,
-    pi: '',
+    pi: '', // PI
   },
   country_name: '',
   country_iso: 'UN',
