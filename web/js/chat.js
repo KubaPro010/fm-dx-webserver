@@ -79,9 +79,7 @@ $(document).ready(function() {
     });
 
     chatNicknameInput.keypress(function(event) {
-        if (event.which === 13) {
-            chatNicknameSave.trigger('click');
-        }
+        if (event.which === 13) chatNicknameSave.trigger('click');
     });
 
     chatSendInput.keypress(function(event) {

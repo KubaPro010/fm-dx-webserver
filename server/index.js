@@ -10,7 +10,7 @@ const WebSocket = require('ws');
 const path = require('path');
 const net = require('net');
 const { SerialPort } = require('serialport');
-const tunnel = require('./tunnel');
+const tunnel_connect = require('./tunnel');
 const { createChatServer } = require('./chat');
 const figlet = require('figlet');
 
@@ -70,7 +70,7 @@ const chatWss = createChatServer(storage);
 
 connectToXdrd();
 connectToSerial();
-tunnel.connect();
+tunnel_connect();
 
 // Serialport retry code when port is open but communication is lost (additional code in datahandler.js)
 dataHandler.state.isSerialportRetrying = false;
@@ -498,7 +498,7 @@ pluginsWss.on('connection', (ws, request) => {
 
     ws.on('message', message => {
         // Anti-spam
-        const command = helpers.antispamProtection(message, clientIp, ws, userCommands, lastWarn, userCommandHistory, '10', 'data_plugins');
+        helpers.antispamProtection(message, clientIp, ws, userCommands, lastWarn, userCommandHistory, '10', 'data_plugins');
 
         let messageData;
 
@@ -531,6 +531,8 @@ httpServer.on('upgrade', (request, socket, head) => {
   }
 
   var upgradeWss = undefined;
+
+  // TODO: make it a map, so plugins can register their url if needed
   if (request.url === '/text') upgradeWss = wss;
   else if (request.url === '/audio') upgradeWss = audioWss;
   else if (request.url === '/chat' && serverConfig.webserver.chatEnabled === true) upgradeWss = chatWss;

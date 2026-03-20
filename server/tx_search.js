@@ -294,8 +294,7 @@ async function fetchTx(freq, piCode, rdsPs) {
         filteredLocations.sort((a, b) => b.score - a.score);
         match = filteredLocations[0];
         // Have a maximum of 10 extra matches and remove any with less than 1/10 of the winning score
-        multiMatches = filteredLocations
-            .slice(1, 11)
+        multiMatches = filteredLocations.slice(1, 11)
             .filter(obj => obj.score >= (match.score / 10));
     } else if (filteredLocations.length === 1) {
         match = filteredLocations[0];

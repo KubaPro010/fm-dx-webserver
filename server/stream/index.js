@@ -41,14 +41,14 @@ checkFFmpeg().then((ffmpegPath) => {
         else inputArgs = ["-f", "alsa", "-i", device];
 
         return [
-            "-fflags", "+flush_packets",
+            "-fflags", "+nobuffer",
             "-flags", "low_delay",
-            "-rtbufsize", "4096",
-            "-probesize", "128",
+            "-rtbufsize", "6144",
+            "-probesize", "256",
 
             ...inputArgs,
 
-            "-thread_queue_size", "1536",
+            "-thread_queue_size", "2048",
             "-ar", String(sampleRate),
             "-ac", String(channels),
 
@@ -62,7 +62,7 @@ checkFFmpeg().then((ffmpegPath) => {
             "-id3v2_version", "0",
 
             "-fflags", "+nobuffer",
-            "-flush_packets", "1",
+            // "-flush_packets", "1",
 
             "pipe:1"
         ];

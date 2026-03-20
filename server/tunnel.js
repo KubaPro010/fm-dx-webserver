@@ -53,10 +53,8 @@ async function connect() {
     });
 
     rl.on('line', (line) => {
-      if (line.includes('connect to server error')) {
-        const reason = line.substring(line.indexOf(': ')+2);
-        logError('Failed to connect to tunnel, reason: ' + reason);
-      } else if (line.includes('invalid user or token')) logError('Failed to connect to tunnel, reason: invalid user or token');
+      if (line.includes('connect to server error')) logError('Failed to connect to tunnel, reason: ' + line.substring(line.indexOf(': ')+2));
+      else if (line.includes('invalid user or token')) logError('Failed to connect to tunnel, reason: invalid user or token');
       else if (line.includes('start proxy success')) logInfo('Tunnel established successfully');
       else if (line.includes('login to server success')) logInfo('Connection to tunnel server was successful');
       else logDebug('Tunnel log:', line);
@@ -94,6 +92,4 @@ httpPassword = "<%= cfg.httpPassword %>"
 <% } %>
 `;
 
-module.exports = {
-  connect
-};
+module.exports = connect;

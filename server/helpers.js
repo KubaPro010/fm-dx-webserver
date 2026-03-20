@@ -24,9 +24,7 @@ function parseMarkdown(parsed) {
   var linkRegex = /\[([^\]]+)]\(([^)]+)\)/g;
   parsed = parsed.replace(linkRegex, '<a href="$2" target="_blank">$1</a>');
 
-  parsed = parsed.replace(/\n/g, '<br>');
-
-  return parsed;
+  return parsed.replace(/\n/g, '<br>');
 }
 
 function removeMarkdown(parsed) {
@@ -42,9 +40,8 @@ function removeMarkdown(parsed) {
   parsed = parsed.replace(italicRegex, '$1');
 
   var linkRegex = /\[([^\]]+)]\(([^)]+)\)/g;
-  parsed = parsed.replace(linkRegex, '$1');
 
-  return parsed;
+  return parsed.replace(linkRegex, '$1');
 }
 
 function authenticateWithXdrd(client, salt, password) {
@@ -95,7 +92,7 @@ let bannedASCache = { data: null, timestamp: 0 };
 
 function fetchBannedAS(callback) {
   const now = Date.now();
-  if (bannedASCache.data && now - bannedASCache.timestamp < 10 * 60 * 1000) return callback(null, bannedASCache.data);
+  if (bannedASCache.data && now - bannedASCache.timestamp < 10 * 60 * 1000) return callback(bannedASCache.data);
 
   const req = https.get("https://fmdx.org/banned_as.json", { family: 4 }, (banResponse) => {
     let banData = "";
@@ -108,10 +105,10 @@ function fetchBannedAS(callback) {
       try {
         const bannedAS = JSON.parse(banData).banned_as || [];
         bannedASCache = { data: bannedAS, timestamp: now };
-        callback(null, bannedAS);
+        callback(bannedAS);
       } catch (error) {
         console.error("Error parsing banned AS list:", error);
-        callback(null, []); // Default to allowing user
+        callback([]); // Default to allowing user
       }
     });
   });
@@ -120,12 +117,12 @@ function fetchBannedAS(callback) {
   req.setTimeout(5000, () => {
     console.error("Error: Request timed out while fetching banned AS list.");
     req.abort();
-    callback(null, []); // Default to allowing user
+    callback([]); // Default to allowing user
   });
 
   req.on("error", (err) => {
     console.error("Error fetching banned AS list:", err);
-    callback(null, []); // Default to allowing user
+    callback([]); // Default to allowing user
   });
 }
 
@@ -136,9 +133,7 @@ function processConnection(clientIp, locationInfo, currentUsers, ws, callback) {
   const connectionTime = new Date().toLocaleString([], options);
   const normalizedClientIp = clientIp?.replace(/^::ffff:/, '');
 
-  fetchBannedAS((error, bannedAS) => {
-    if (error) console.error("Error fetching banned AS list:", error);
-
+  fetchBannedAS((bannedAS) => {
     if (bannedAS.some((as) => locationInfo.as?.includes(as))) {
       const now = Date.now();
       const lastSeen = recentBannedIps.get(normalizedClientIp) || 0;
@@ -151,8 +146,7 @@ function processConnection(clientIp, locationInfo, currentUsers, ws, callback) {
       return callback("User banned");
     }
 
-    const userLocation =
-      locationInfo.country === undefined ? "Unknown" : `${locationInfo.city}, ${locationInfo.regionName}, ${locationInfo.countryCode}`;
+    const userLocation = locationInfo.country === undefined ? "Unknown" : `${locationInfo.city}, ${locationInfo.regionName}, ${locationInfo.countryCode}`;
 
     storage.connectedUsers.push({
       ip: clientIp,
@@ -168,13 +162,12 @@ function processConnection(clientIp, locationInfo, currentUsers, ws, callback) {
 }
 
 function formatUptime(uptimeInSeconds) {
-  const secondsInMinute = 60;
-  const secondsInHour = secondsInMinute * 60;
+  const secondsInHour = 60 ** 2;
   const secondsInDay = secondsInHour * 24;
 
   const days = Math.floor(uptimeInSeconds / secondsInDay);
   const hours = Math.floor((uptimeInSeconds % secondsInDay) / secondsInHour);
-  const minutes = Math.floor((uptimeInSeconds % secondsInHour) / secondsInMinute);
+  const minutes = Math.floor((uptimeInSeconds % secondsInHour) / 60);
 
   return `${days}d ${hours}h ${minutes}m`;
 }

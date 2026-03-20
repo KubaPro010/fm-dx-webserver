@@ -47,7 +47,7 @@ let serverConfig = {
     audioBitrate: "128k",
     audioBoost: false,
     softwareMode: false,
-    startupVolume: "0.95",
+    startupVolume: "1",
     ffmpeg: false,
     samplerateOffset: "0"
   },
