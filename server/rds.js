@@ -138,6 +138,7 @@ function decode_charset(input) {
       case 0xFD: character = 'ź'; break;
       case 0xFE: character = 'ŧ'; break;
       case 0xFF: character = ' '; break;
+      default: character = String.fromCharCode(input); break;
     }
     return character
 }
@@ -233,8 +234,8 @@ class RDSDecoder {
 
         const idx = blockB & 0x3;
 
-        this.ps[idx * 2] = String.fromCharCode(decode_charset(blockD >> 8));
-        this.ps[idx * 2 + 1] = String.fromCharCode(decode_charset(blockD & 0xFF));
+        this.ps[idx * 2] = decode_charset(blockD >> 8);
+        this.ps[idx * 2 + 1] = decode_charset(blockD & 0xFF);
         this.ps_errors[idx * 2] = Math.ceil(d_error * (10/3));
         this.ps_errors[idx * 2 + 1] = Math.ceil(d_error * (10/3));
 
@@ -264,15 +265,15 @@ class RDSDecoder {
             }
 
             if(c_error < 2 && multiplier !== 2) {
-                this.rt1[idx * multiplier] = String.fromCharCode(decode_charset(blockC >> 8));
-                this.rt1[idx * multiplier + 1] = String.fromCharCode(decode_charset(blockC & 0xFF));
+                this.rt1[idx * multiplier] = decode_charset(blockC >> 8);
+                this.rt1[idx * multiplier + 1] = decode_charset(blockC & 0xFF);
                 this.rt1_errors[idx * multiplier] = Math.ceil(c_error * (10/3));
                 this.rt1_errors[idx * multiplier + 1] = Math.ceil(c_error * (10/3));
             }
             if(d_error < 2) {
                 var offset = (multiplier == 2) ? 0 : 2;
-                this.rt1[idx * multiplier + offset] = String.fromCharCode(decode_charset(blockD >> 8));
-                this.rt1[idx * multiplier + offset + 1] = String.fromCharCode(decode_charset(blockD & 0xFF));
+                this.rt1[idx * multiplier + offset] = decode_charset(blockD >> 8);
+                this.rt1[idx * multiplier + offset + 1] = decode_charset(blockD & 0xFF);
                 this.rt1_errors[idx * multiplier + offset] = Math.ceil(d_error * (10/3));
                 this.rt1_errors[idx * multiplier + offset + 1] = Math.ceil(d_error * (10/3));
             }
