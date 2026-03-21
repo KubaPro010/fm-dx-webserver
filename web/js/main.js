@@ -418,9 +418,9 @@ function handleWebSocketMessage(event) {
         console.log('Kick initiated.')
         setTimeout(() => {
             window.location.href = '/403';
-        }, 500);
+        }, 350);
         return;
-    }
+    } else if (event.data.startsWith("!")) sendToast('info', 'Info from server', event.data.slice(1), false, false)
 
     parsedData = JSON.parse(event.data);
 

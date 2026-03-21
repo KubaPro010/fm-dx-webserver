@@ -202,6 +202,11 @@ function handleData(wss, receivedData, rdsWss) {
         rdsdec.decodeGroup(parseInt(a, 16), parseInt(b, 16), parseInt(c, 16), parseInt(d, 16), errors);
         legacyRdsPiBuffer = null;
         break;
+      case receivedLine.startsWith("!"):
+        wss.clients.forEach((client) => {
+          client.send(receivedLine.trim());
+        });
+        break;
     }
   }
 
