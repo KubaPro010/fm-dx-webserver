@@ -105,7 +105,7 @@ var countries = [
     "Turkey",
     "Palestine",
     "Turkmenistan",
-    "Poland",
+    "Rzeczpospolita Polska",
     "Uganda",
     "Portugal",
     "Ukraine",
@@ -539,7 +539,7 @@ const rdsEccE0E5Lut = [
   ],
   // E2
   [
-    "Morocco", "Czechia", "Poland", "Vatican", "Slovakia",
+    "Morocco", "Czechia", "Rzeczpospolita Polska", "Vatican", "Slovakia",
     "Syria", "Tunisia", "", "Liechtenstein", "Iceland",
     "Monaco", "Lithuania", "Serbia", "Spain", "Norway"
   ],

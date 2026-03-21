@@ -106,8 +106,8 @@ function handleData(wss, receivedData, rdsWss) {
       case receivedLine.startsWith('T'): // Frequency
         modifiedData = receivedLine.substring(1).split(",")[0];
 
-        rdsReset();
         if((modifiedData / 1000).toFixed(3) == dataToSend.freq) return; // Prevent tune spamming using scrollwheel
+        rdsReset();
 
         parsedValue = parseFloat(modifiedData);
 

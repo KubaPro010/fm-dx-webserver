@@ -343,10 +343,24 @@ function findServerFiles(plugins) {
   return results;
 }
 
+function getIpAddress(request) {
+  const remoteIp = request.socket.remoteAddress;
+  const xff = request.headers['x-forwarded-for'];
+
+  // If X-Forwarded-For is present but request is NOT from a trusted proxy → suspicious
+  if (xff && !serverConfig.trustedProxies.includes(remoteIp)) {
+    consoleCmd.logSecurity(`Untrusted proxy tried to set X-Forwarded-For: ${xff} (remote: ${remoteIp})`);
+    return remoteIp;
+  }
+
+  if (xff && serverConfig.trustedProxies.includes(remoteIp)) return xff.split(',')[0].trim();
+  return remoteIp;
+}
+
 module.exports = {
   authenticateWithXdrd, parseMarkdown, handleConnect,
   removeMarkdown, formatUptime, resolveDataBuffer,
   kickClient, checkIPv6Support, checkLatency,
   antispamProtection, escapeHtml, findServerFiles,
-  startPluginsWithDelay
+  startPluginsWithDelay, getIpAddress
 }

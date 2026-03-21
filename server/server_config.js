@@ -126,7 +126,8 @@ let serverConfig = {
   stereoNoUsers: "0",
   antennaStartup: "0",
   antennaNoUsers: "0",
-  antennaNoUsersDelay: false
+  antennaNoUsersDelay: false,
+  trustedProxies: []
 };
 
 // Function to add missing fields without overwriting existing values

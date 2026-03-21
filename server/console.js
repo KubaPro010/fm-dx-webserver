@@ -21,6 +21,7 @@ const MESSAGE_PREFIX = {
     FFMPEG: "\x1b[36m[FFMPEG]\x1b[0m",
     INFO: "\x1b[32m[INFO]\x1b[0m",
     WARN: "\x1b[33m[WARN]\x1b[0m",
+    SECURITY: "\x1b[36m[SECURITY]\x1b[0m",
 };
 
 const getCurrentTime = () => {
@@ -44,6 +45,7 @@ const logMessage = (type, messages) => {
     if(type !== 'FFMPEG') appendLogToBuffer(logMessage);
 };
 
+const logSecurity = (...messages) => logMessage('SECURITY', messages);
 const logDebug = (...messages) => logMessage('DEBUG', messages);
 const logChat = (message) => logMessage('CHAT', [`${message.nickname} (${message.ip}) sent a chat message: ${message.message}`]);
 const logError = (...messages) => logMessage('ERROR', messages);
@@ -87,4 +89,4 @@ process.on('exit', flushLogBuffer);
 process.on('SIGINT', gracefulExit);
 process.on('SIGTERM', gracefulExit);
 
-module.exports = { logError, logDebug, logFfmpeg, logInfo, logWarn, logs, logChat };
+module.exports = { logError, logDebug, logFfmpeg, logInfo, logWarn, logs, logChat, logSecurity };

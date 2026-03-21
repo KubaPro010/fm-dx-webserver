@@ -19,10 +19,10 @@ const allPluginConfigs = require('./plugins');
 
 // Endpoints
 router.get('/', (req, res) => {
-    let requestIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    let requestIp = helpers.getIpAddress(req);
 
     const normalizedIp = requestIp?.replace(/^::ffff:/, '');
-    const ipList = (normalizedIp || '').split(',').map(ip => ip.trim()).filter(Boolean); // in case there are multiple IPs (proxy), we need to check all of them
+    const ipList = (normalizedIp || '').split(',').map(ip => ip.trim()).filter(Boolean); // in case there are multiple IPs (proxy), we need to check all of them (No we don't)
     
     const banEntry = serverConfig.webserver.banlist.find(banEntry => ipList.includes(banEntry[0]));
     
@@ -385,7 +385,7 @@ router.get('/log_fmlist', (req, res) => {
         return;
     }
 
-    const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const clientIp = helpers.getIpAddress(req);
     const txId = dataHandler.dataToSend.txInfo.id; // Extract the ID
 
     if (!canLog(txId)) {

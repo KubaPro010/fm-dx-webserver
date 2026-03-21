@@ -1,11 +1,12 @@
 const WebSocket = require('ws');
 const { serverConfig } = require('../server_config');
 const audio_pipe = require('./index.js');
+const { getIpAddress } = require("../helpers.js")
 
 const audioWss = new WebSocket.Server({ noServer: true, skipUTF8Validation: true });
 
 audioWss.on('connection', (ws, request) => {
-    const clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress;
+    const clientIp = getIpAddress(request);
 
     if (serverConfig.webserver.banlist?.includes(clientIp)) {
         ws.close(1008, 'Banned IP');

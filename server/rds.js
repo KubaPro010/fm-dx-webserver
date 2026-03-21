@@ -232,12 +232,20 @@ class RDSDecoder {
 
         if(d_error > 2) return; // Don't risk it
 
+        
         const idx = blockB & 0x3;
+        
+        const last_err = this.ps_errors[idx * 2];
+        const cur_err = Math.ceil(d_error * (10/3));
+        const character_a = decode_charset(blockD >> 8);
+        const character_b = decode_charset(blockD & 0xFF);
 
-        this.ps[idx * 2] = decode_charset(blockD >> 8);
-        this.ps[idx * 2 + 1] = decode_charset(blockD & 0xFF);
-        this.ps_errors[idx * 2] = Math.ceil(d_error * (10/3));
-        this.ps_errors[idx * 2 + 1] = Math.ceil(d_error * (10/3));
+        if(last_err < cur_err && this.ps[idx * 2] == character_a && this.ps[idx * 2 + 1] == character_b) return;
+
+        this.ps[idx * 2] = character_a;
+        this.ps[idx * 2 + 1] = character_b;
+        this.ps_errors[idx * 2] = cur_err;
+        this.ps_errors[idx * 2 + 1] = cur_err;
 
         this.data.ps = this.ps.join('');
         this.data.ps_errors = this.ps_errors.join(',');

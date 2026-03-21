@@ -301,7 +301,7 @@ setInterval(() => {
 
 wss.on('connection', (ws, request) => {
     const output = serverConfig.xdrd.wirelessConnection ? client : serialport;
-    let clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress;
+    let clientIp = helpers.getIpAddress(request);
     const userCommandHistory = {};
     const normalizedClientIp = clientIp?.replace(/^::ffff:/, '');
   
@@ -486,7 +486,7 @@ wss.on('connection', (ws, request) => {
 
 // Additional web socket for using plugins
 pluginsWss.on('connection', (ws, request) => {
-    const clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress;
+    const clientIp = helpers.getIpAddress(request);
     const userCommandHistory = {};
     if (serverConfig.webserver.banlist?.includes(clientIp)) {
       ws.close(1008, 'Banned IP');
@@ -524,7 +524,7 @@ pluginsWss.on('connection', (ws, request) => {
 
 // Websocket register for /text, /audio and /chat paths
 httpServer.on('upgrade', (request, socket, head) => { 
-  const clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress;
+  const clientIp = helpers.getIpAddress(request);
   if (serverConfig.webserver.banlist?.includes(clientIp)) {
     socket.destroy();
     return;

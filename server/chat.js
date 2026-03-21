@@ -16,7 +16,7 @@ function createChatServer(storage) {
         ws.isAlive = true;
         ws.on('pong', heartbeat);
 
-        const clientIp = request.headers['x-forwarded-for'] || request.socket.remoteAddress;
+        const clientIp = helpers.getIpAddress(request);
         const userCommandHistory = {};
 
         if (serverConfig.webserver.banlist?.includes(clientIp)) {

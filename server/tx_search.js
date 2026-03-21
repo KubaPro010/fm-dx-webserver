@@ -26,7 +26,6 @@ const WebSocket = require('ws');
 // Get weighting values based on algorithm setting.
 // Defaults = algorithm 1
 let weightedErp = 10;
-let weightedDist = 400;
 const algorithms = [
     [10, 400],
     [30, 500],
@@ -268,7 +267,11 @@ async function fetchTx(freq, piCode, rdsPs) {
     if (filteredLocations.length > 1) {
         const extraFilteredLocations = filteredLocations.map(locData => ({
             ...locData,
-            stations: locData.stations.filter(station => (station.ps?.toLowerCase() === rdsPs.replace(/ /g, '_').toLowerCase()))
+            stations: locData.stations.filter(station => 
+                station.ps?.toLowerCase().includes(
+                    rdsPs.replace(/ /g, '_').toLowerCase()
+                ) ?? false
+            )
         })).filter(locData => locData.stations.length > 0);
 
         if (extraFilteredLocations.length > 0) filteredLocations = extraFilteredLocations;
@@ -370,8 +373,7 @@ function haversine(lat1, lon1, lat2, lon2) {
 
     const y = Math.sin(dLon) * Math.cos(deg2rad(lat2));
     const x = Math.cos(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) - Math.sin(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(dLon);
-    const azimuth = Math.atan2(y, x);
-    const azimuthDegrees = (azimuth * 180 / Math.PI + 360) % 360;
+    const azimuthDegrees = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 
     return {
         distanceKm: distance,
