@@ -343,17 +343,32 @@ function findServerFiles(plugins) {
   return results;
 }
 
+function normalizeIp(ip) {
+  if(ip && ip.startsWith('::ffff:')) return ip.substring(7);
+  return ip;
+}
+
+function isLocalhost(ip) {
+  const normalized = normalizeIp(ip);
+  return normalized === '127.0.0.1' || normalized === '::1';
+}
+
+function isTrustedProxy(ip) {
+  return serverConfig.trustedProxies.includes(normalizeIp(ip));
+}
+
 function getIpAddress(request) {
-  const remoteIp = request.socket.remoteAddress;
+  const remoteIpRaw = request.socket.remoteAddress;
+  const remoteIp = normalizeIp(remoteIpRaw);
   const xff = request.headers['x-forwarded-for'];
 
-  // If X-Forwarded-For is present but request is NOT from a trusted proxy → suspicious
-  if (xff && !serverConfig.trustedProxies.includes(remoteIp)) {
-    consoleCmd.logSecurity(`Untrusted proxy tried to set X-Forwarded-For: ${xff} (remote: ${remoteIp})`);
+  if (xff && !isLocalhost(remoteIp) && !isTrustedProxy(remoteIp)) {
+    consoleCmd.logSecurity(`Untrusted proxy tried to set X-Forwarded-For: ${xff} (remote: ${remoteIpRaw})`);
     return remoteIp;
   }
 
-  if (xff && serverConfig.trustedProxies.includes(remoteIp)) return xff.split(',')[0].trim();
+  if (xff) return normalizeIp(xff.split(',')[0].trim());
+
   return remoteIp;
 }
 
