@@ -21,15 +21,14 @@ const allPluginConfigs = require('./plugins');
 router.get('/', (req, res) => {
     let requestIp = helpers.getIpAddress(req);
 
-    const normalizedIp = requestIp?.replace(/^::ffff:/, '');
-    const ipList = (normalizedIp || '').split(',').map(ip => ip.trim()).filter(Boolean); // in case there are multiple IPs (proxy), we need to check all of them (No we don't)
+    const ipList = (requestIp || '').split(',').map(ip => ip.trim()).filter(Boolean); // in case there are multiple IPs (proxy), we need to check all of them (No we don't)
     
     const banEntry = serverConfig.webserver.banlist.find(banEntry => ipList.includes(banEntry[0]));
     
     if (banEntry) {
         const reason = banEntry[3];
         res.render('403', { reason });
-        logInfo(`Web client (${normalizedIp}) is banned`);
+        logInfo(`Web client (${requestIp}) is banned`);
         return;
     }
 
@@ -46,7 +45,7 @@ router.get('/', (req, res) => {
             }));
             
             parseAudioDevice((result) => {
-                res.render('wizard', {
+                res.render('wizard', { // Magical utility wizard
                     isAdminAuthenticated: true,
                     videoDevices: result.audioDevices,
                     audioDevices: result.videoDevices,
@@ -123,57 +122,57 @@ router.get('/wizard', (req, res) => {
     })
 })
   
-  router.get('/setup', (req, res) => {
-      let serialPorts; 
-      function loadConfig() {
+router.get('/setup', (req, res) => {
+    let serialPorts; 
+    function loadConfig() {
         if (fs.existsSync(configPath)) {
-          const configFileContents = fs.readFileSync(configPath, 'utf8');
-          return JSON.parse(configFileContents);
+            const configFileContents = fs.readFileSync(configPath, 'utf8');
+            return JSON.parse(configFileContents);
         }
         return serverConfig;
-      }
-  
-      if(!req.session.isAdminAuthenticated) {
-          res.render('login');
-          return;
-      }
-      
-      SerialPort.list()
-      .then((deviceList) => {
-          serialPorts = deviceList.map(port => ({
-              path: port.path,
-              friendlyName: port.friendlyName,
-          }));
-          
-          parseAudioDevice((result) => {
-              const processUptimeInSeconds = Math.floor(process.uptime());
-              const formattedProcessUptime = helpers.formatUptime(processUptimeInSeconds);
-              
-              const updatedConfig = loadConfig();  // Reload the config every time
-              res.render('setup', {
-                    isAdminAuthenticated: req.session.isAdminAuthenticated,
-                    videoDevices: result.audioDevices,
-                    audioDevices: result.videoDevices,
-                    serialPorts: serialPorts,
-                    memoryUsage: (process.memoryUsage.rss() / 1024 / 1024).toFixed(1) + ' MB',
-                    memoryHeap: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1) + ' MB',
-                    processUptime: formattedProcessUptime,
-                    consoleOutput: logs,
-                    plugins: allPluginConfigs,
-                    enabledPlugins: updatedConfig.plugins,
-                    onlineUsers: dataHandler.dataToSend.users,
-                    connectedUsers: storage.connectedUsers,
-                    device: serverConfig.device,
-                    banlist: updatedConfig.webserver.banlist, // Updated banlist from the latest config
-                    tunerProfiles: tunerProfiles.map((profile) => ({
-                        id: profile.id,
-                        label: profile.label,
-                        detailsHtml: helpers.parseMarkdown(profile.details || '')
-                    }))
-              });
-          });
-      }) 
-  });
+    }
+
+    if(!req.session.isAdminAuthenticated) {
+        res.render('login');
+        return;
+    }
+    
+    SerialPort.list()
+    .then((deviceList) => {
+        serialPorts = deviceList.map(port => ({
+            path: port.path,
+            friendlyName: port.friendlyName,
+        }));
+        
+        parseAudioDevice((result) => {
+            const processUptimeInSeconds = Math.floor(process.uptime());
+            const formattedProcessUptime = helpers.formatUptime(processUptimeInSeconds);
+            
+            const updatedConfig = loadConfig();  // Reload the config every time
+            res.render('setup', {
+                isAdminAuthenticated: req.session.isAdminAuthenticated,
+                videoDevices: result.audioDevices,
+                audioDevices: result.videoDevices,
+                serialPorts: serialPorts,
+                memoryUsage: (process.memoryUsage.rss() / 1024 / 1024).toFixed(1) + ' MB',
+                memoryHeap: (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1) + ' MB',
+                processUptime: formattedProcessUptime,
+                consoleOutput: logs,
+                plugins: allPluginConfigs,
+                enabledPlugins: updatedConfig.plugins,
+                onlineUsers: dataHandler.dataToSend.users,
+                connectedUsers: storage.connectedUsers,
+                device: serverConfig.device,
+                banlist: updatedConfig.webserver.banlist, // Updated banlist from the latest config
+                tunerProfiles: tunerProfiles.map((profile) => ({
+                    id: profile.id,
+                    label: profile.label,
+                    detailsHtml: helpers.parseMarkdown(profile.details || '')
+                }))
+            });
+        });
+    }) 
+});
   
 
 router.get('/rds', (req, res) => {
@@ -197,11 +196,11 @@ router.get('/api', (req, res) => {
 
 
 const loginAttempts = {}; // Format: { 'ip': { count: 1, lastAttempt: 1234567890 } }
-const MAX_ATTEMPTS = 15;
+const MAX_ATTEMPTS = 10;
 const WINDOW_MS = 15 * 60 * 1000; 
 
 const authenticate = (req, res, next) => {
-    const ip = req.ip || req.connection.remoteAddress;
+    const ip = helpers.getIpAddress(req);
     const now = Date.now();
 
     if (!loginAttempts[ip]) loginAttempts[ip] = { count: 0, lastAttempt: now };
@@ -226,6 +225,8 @@ const authenticate = (req, res, next) => {
         loginAttempts[ip].count = 0;
         next();
     } else {
+        req.session.isAdminAuthenticated = false;
+        req.session.isTuneAuthenticated = false;
         loginAttempts[ip].count += 1;
         res.status(403).json({ message: 'Login failed. Wrong password?' });
     }
@@ -245,16 +246,23 @@ router.get('/logout', (req, res) => {
 });
 
 router.get('/kick', (req, res) => {
-    const ipAddress = req.query.ip;
     // Terminate the WebSocket connection for the specified IP address
-    if(req.session.isAdminAuthenticated) helpers.kickClient(ipAddress);
+    if(req.session.isAdminAuthenticated) helpers.kickClient(req.query.ip);
+    else {
+        res.status(403);
+        return;
+    }
     setTimeout(() => {
         res.redirect('/setup');
     }, 500);
 });
 
 router.get('/addToBanlist', (req, res) => {
-    if (!req.session.isAdminAuthenticated) return;
+    if (!req.session.isAdminAuthenticated) {
+        res.status(403);
+        return;
+    }
+
     const ipAddress = req.query.ip;
     const location = 'Unknown';
     const date = Date.now();
@@ -271,7 +279,10 @@ router.get('/addToBanlist', (req, res) => {
 });
 
 router.get('/removeFromBanlist', (req, res) => {
-    if (!req.session.isAdminAuthenticated) return;
+    if (!req.session.isAdminAuthenticated) {
+        res.status(403);
+        return;
+    }
 
     const ipAddress = req.query.ip;
 
@@ -303,9 +314,7 @@ router.post('/saveData', (req, res) => {
 });
 
 router.get('/getData', (req, res) => {  
-    if (configExists() === false) {
-        res.json(serverConfig);
-    }
+    if (configExists() === false) res.json(serverConfig);
     
     if(req.session.isAdminAuthenticated) {
         // Check if the file exists
@@ -346,9 +355,7 @@ router.get('/static_data', (req, res) => {
 router.get('/server_time', (req, res) => {
     const serverTime = new Date(); // Get current server time
     const serverTimeUTC = new Date(serverTime.getTime() - (serverTime.getTimezoneOffset() * 60000)); // Adjust server time to UTC
-    res.json({
-        serverTime: serverTimeUTC,
-    });
+    res.json({ serverTime: serverTimeUTC });
 });
 
 router.get('/ping', (req, res) => {

@@ -30,6 +30,12 @@ const wss = new WebSocket.Server({ noServer: true });
 const rdsWss = new WebSocket.Server({ noServer: true });
 const pluginsWss = new WebSocket.Server({ noServer: true, perMessageDeflate: true });
 
+storage.websocket_delegation.set("/text", wss);
+storage.websocket_delegation.set("/audio", audioWss);
+storage.websocket_delegation.set("/rds", rdsWss);
+storage.websocket_delegation.set("/rdsspy", rdsWss);
+storage.websocket_delegation.set("/data_plugins", pluginsWss);
+
 // Get all plugins from config and find corresponding server files
 const plugins = findServerFiles(serverConfig.plugins);
 
@@ -40,10 +46,7 @@ if (plugins.length > 0) {
   }, 3000); // Initial delay of 3 seconds for the first plugin
 }
 
-const terminalWidth = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-}).output.columns;
+const terminalWidth = readline.createInterface({input: process.stdin, output: process.stdout}).output.columns;
 
 console.log('\x1b[32m' + figlet.textSync("FM-DX Webserver"));
 console.log('\x1b[32m\x1b[2mby Noobish @ \x1b[4mFMDX.org + KubaPro010\x1b[0m');
@@ -66,7 +69,7 @@ const sessionMiddleware = session({
 });
 app.use(sessionMiddleware);
 app.use(bodyParser.json());
-const chatWss = createChatServer(storage);
+createChatServer(storage);
 
 connectToXdrd();
 connectToSerial();
@@ -276,7 +279,7 @@ client.on('error', (err) => {
 });
 
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '../web'));
+app.set('views', path.join(__dirname, '../views'));
 app.use('/', endpoints);
 
 const tunerLockTracker = new WeakMap();
@@ -530,15 +533,7 @@ httpServer.on('upgrade', (request, socket, head) => {
     return;
   }
 
-  var upgradeWss = undefined;
-
-  // TODO: make it a map, so plugins can register their url if needed
-  if (request.url === '/text') upgradeWss = wss;
-  else if (request.url === '/audio') upgradeWss = audioWss;
-  else if (request.url === '/chat' && serverConfig.webserver.chatEnabled === true) upgradeWss = chatWss;
-  else if (request.url === '/rds' || request.url === '/rdsspy') upgradeWss = rdsWss;
-  else if (request.url === '/data_plugins') upgradeWss = pluginsWss;
-  
+  const upgradeWss = storage.websocket_delegation.get(request.url);  
   if(upgradeWss) {
     sessionMiddleware(request, {}, () => {
       upgradeWss.handleUpgrade(request, socket, head, (ws) => {

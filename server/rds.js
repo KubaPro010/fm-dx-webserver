@@ -232,7 +232,6 @@ class RDSDecoder {
 
         if(d_error > 2) return; // Don't risk it
 
-        
         const idx = blockB & 0x3;
         
         const last_err = this.ps_errors[idx * 2];

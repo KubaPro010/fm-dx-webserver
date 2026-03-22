@@ -8,7 +8,7 @@ function heartbeat() { // WebSocket heartbeat helper
 }
 
 function createChatServer(storage) {
-    if (!serverConfig.webserver.chatEnabled) return null;
+    if (!serverConfig.webserver.chatEnabled) return;
 
     const chatWss = new WebSocket.Server({ noServer: true });
 
@@ -118,7 +118,7 @@ function createChatServer(storage) {
         clearInterval(interval);
     });
 
-    return chatWss;
+    storage.websocket_delegation.set("/chat", chatWss);
 }
 
 module.exports = { createChatServer };

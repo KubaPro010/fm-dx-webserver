@@ -26,6 +26,7 @@ const WebSocket = require('ws');
 // Get weighting values based on algorithm setting.
 // Defaults = algorithm 1
 let weightedErp = 10;
+let weightedDist = 400;
 const algorithms = [
     [10, 400],
     [30, 500],
@@ -287,9 +288,7 @@ async function fetchTx(freq, piCode, rdsPs) {
   
     if (filteredLocations.length > 1) {
         // Check for any 10kW+ stations within 700km, and don't Es weight if any found.
-        const tropoPriority = filteredLocations.some(
-            loc => loc.distanceKm < 700 && loc.erp >= 10
-        );
+        const tropoPriority = filteredLocations.some(loc => loc.distanceKm < 700 && loc.erp >= 10);
         let esMode = false;
         if (!tropoPriority) esMode = checkEs();
         for (let loc of filteredLocations) loc.score = evaluateStation(loc, esMode);
@@ -297,15 +296,14 @@ async function fetchTx(freq, piCode, rdsPs) {
         filteredLocations.sort((a, b) => b.score - a.score);
         match = filteredLocations[0];
         // Have a maximum of 10 extra matches and remove any with less than 1/10 of the winning score
-        multiMatches = filteredLocations.slice(1, 11)
-            .filter(obj => obj.score >= (match.score / 10));
+        multiMatches = filteredLocations.slice(1, 11).filter(obj => obj.score >= (match.score / 10));
     } else if (filteredLocations.length === 1) {
         match = filteredLocations[0];
         match.score = 1;
     }
 
     if (match) {
-        if (match.itu == 'USA') { // Also known as Dumbfuckinstan. they should not go to hell, but hell+ (it is NOT better)
+        if (match.itu == 'USA') { // Also known as Dumbfuckinstan. they should not go to hell, but hell+ (it is NOT better). Jews have anti-semitism, but what do americans have?
             const state = getStateForCoordinates(match.lat, match.lon);
             if (state) match.state = state;  // Add state to matchingCity
         }
