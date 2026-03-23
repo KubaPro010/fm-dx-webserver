@@ -31,7 +31,6 @@ const rdsWss = new WebSocket.Server({ noServer: true });
 const pluginsWss = new WebSocket.Server({ noServer: true, perMessageDeflate: true });
 
 storage.websocket_delegation.set("/text", wss);
-storage.websocket_delegation.set("/audio", audioWss);
 storage.websocket_delegation.set("/rds", rdsWss);
 storage.websocket_delegation.set("/rdsspy", rdsWss);
 storage.websocket_delegation.set("/data_plugins", pluginsWss);
@@ -54,6 +53,7 @@ console.log("v" + pjson.version)
 console.log('\x1b[90m' + '─'.repeat(terminalWidth - 1) + '\x1b[0m');
 
 const audioWss = require('./stream/ws.js');
+storage.websocket_delegation.set("/audio", audioWss);
 require('./stream/index');
 require('./plugins');
 
