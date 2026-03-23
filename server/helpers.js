@@ -143,20 +143,20 @@ function handleConnect(clientIp, currentUsers, ws, callback) {
     consoleCmd.logWarn('geoip-lite is not installed; location will be Unknown.');
   }
 
-  const inFlightPromise = fetchIpWhoisInfo(normalizedClientIp)
+  const inFlightPromise = fetchIpWhoisInfo(clientIp)
     .then((whoisInfo) => {
       const merged = { ...locationInfo, ...whoisInfo };
-      ipCache.set(normalizedClientIp, merged);
-      ipInfoInFlight.delete(normalizedClientIp);
+      ipCache.set(clientIp, merged);
+      ipInfoInFlight.delete(clientIp);
       return merged;
     })
     .catch(() => {
-      ipCache.set(normalizedClientIp, locationInfo);
-      ipInfoInFlight.delete(normalizedClientIp);
+      ipCache.set(clientIp, locationInfo);
+      ipInfoInFlight.delete(clientIp);
       return locationInfo;
     });
 
-  ipInfoInFlight.set(normalizedClientIp, inFlightPromise);
+  ipInfoInFlight.set(clientIp, inFlightPromise);
   inFlightPromise.then((info) => processConnection(clientIp, info, currentUsers, ws, callback));
 }
 
@@ -332,11 +332,10 @@ function antispamProtection(message, clientIp, ws, userCommands, lastWarn, userC
   const rawCommand = message.toString();
   const command = rawCommand.replace(/[\r\n]+/g, '');
   const now = Date.now();
-  const normalizedClientIp = clientIp?.replace(/^::ffff:/, '');
   if (endpointName === 'text') consoleCmd.logDebug(`Command received from \x1b[90m${clientIp}\x1b[0m: ${command}`);
 
   if (command.length > maxPayloadSize) {
-    consoleCmd.logWarn(`Command from \x1b[90m${normalizedClientIp}\x1b[0m on \x1b[90m/${endpointName}\x1b[0m exceeded maximum payload size (${parseInt(command.length / 1024)} KB / ${parseInt(maxPayloadSize / 1024)} KB).`);
+    consoleCmd.logWarn(`Command from \x1b[90m${clientIp}\x1b[0m on \x1b[90m/${endpointName}\x1b[0m exceeded maximum payload size (${parseInt(command.length / 1024)} KB / ${parseInt(maxPayloadSize / 1024)} KB).`);
     return "";
   }
 
@@ -354,12 +353,12 @@ function antispamProtection(message, clientIp, ws, userCommands, lastWarn, userC
     consoleCmd.logWarn(`User \x1b[90m${clientIp}\x1b[0m is spamming with rapid commands. Connection will be terminated and user will be banned.`);
 
     // Check if the normalized IP is already in the banlist
-    const isAlreadyBanned = serverConfig.webserver.banlist.some(banEntry => banEntry[0] === normalizedClientIp);
+    const isAlreadyBanned = serverConfig.webserver.banlist.some(banEntry => banEntry[0] === clientIp);
 
     if (!isAlreadyBanned) {
         // Add the normalized IP to the banlist
-        serverConfig.webserver.banlist.push([normalizedClientIp, 'Unknown', Date.now(), '[Auto ban] Spam']);
-        consoleCmd.logInfo(`User \x1b[90m${normalizedClientIp}\x1b[0m has been added to the banlist due to extreme spam.`);
+        serverConfig.webserver.banlist.push([clientIp, 'Unknown', Date.now(), '[Auto ban] Spam']);
+        consoleCmd.logInfo(`User \x1b[90m${clientIp}\x1b[0m has been added to the banlist due to extreme spam.`);
         configSave();
     }
 

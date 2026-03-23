@@ -306,7 +306,6 @@ wss.on('connection', (ws, request) => {
     const output = serverConfig.xdrd.wirelessConnection ? client : serialport;
     let clientIp = helpers.getIpAddress(request);
     const userCommandHistory = {};
-    const normalizedClientIp = clientIp?.replace(/^::ffff:/, '');
   
     if (clientIp && serverConfig.webserver.banlist?.includes(clientIp)) {
         ws.close(1008, 'Banned IP');
@@ -328,7 +327,7 @@ wss.on('connection', (ws, request) => {
                 const lastLogTime = ipLogTimestamps.get(clientIp) || 0;
                 const now = Date.now();
                 if (now - lastLogTime > IP_LOG_INTERVAL_MS) {
-                    logWarn(`Web client \x1b[31mclosed: limit exceeded\x1b[0m (${normalizedClientIp}) \x1b[90m[${currentUsers}]`);
+                    logWarn(`Web client \x1b[31mclosed: limit exceeded\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]`);
                     ipLogTimestamps.set(clientIp, now);
                 }
                 return;
@@ -481,7 +480,7 @@ wss.on('connection', (ws, request) => {
 
       if (currentUsers === 0 && serverConfig.autoShutdown === true && serverConfig.xdrd.wirelessConnection === true) client.write('X\n');
 
-      if (code !== 1008) logInfo(`Web client \x1b[31mdisconnected\x1b[0m (${normalizedClientIp}) \x1b[90m[${currentUsers}]`);
+      if (code !== 1008) logInfo(`Web client \x1b[31mdisconnected\x1b[0m (${clientIp}) \x1b[90m[${currentUsers}]`);
     });
 
     ws.on('error', console.error);
