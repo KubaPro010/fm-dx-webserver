@@ -7,7 +7,7 @@ const LOG_FILE = process.argv.includes('--config') && process.argv[process.argv.
   ? `serverlog_${process.argv[process.argv.indexOf('--config') + 1]}.txt`
   : 'serverlog.txt';
 const ANSI_ESCAPE_CODE_PATTERN = /\x1b\[[0-9;]*m/g;
-const MAX_LOG_LINES = 5000;
+const MAX_LOG_LINES = 3500;
 const FLUSH_INTERVAL = 60000;
 const logs = [];
 const maxConsoleLogLines = 250;

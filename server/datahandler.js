@@ -56,7 +56,6 @@ const filterMappings = {
   'G00': { eq: 0, ims: 0 }
 };
 
-
 var legacyRdsPiBuffer = null;
 var lastUpdateTime = Date.now();
 const initialData = { ...dataToSend };

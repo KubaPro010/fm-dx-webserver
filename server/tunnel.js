@@ -12,7 +12,7 @@ const readline = require('readline');
 
 const fileExists = path => new Promise(resolve => fs.access(path, fs.constants.F_OK).then(() => resolve(true)).catch(() => resolve(false)));
 
-async function connect() {
+async function download() {
   if (serverConfig.tunnel?.enabled === true) {
     const librariesDir = path.resolve(__dirname, '../libraries');
     if (!await fileExists(librariesDir)) await fs.mkdir(librariesDir);
@@ -33,6 +33,14 @@ async function connect() {
       logInfo('Downloading of frpc is completed.')
       if (os.platform() === 'linux' || os.platform() === 'darwin') await fs.chmod(frpcPath, 0o770);
     }
+  }
+}
+
+async function connect() {
+  if (serverConfig.tunnel?.enabled === true) {
+    const librariesDir = path.resolve(__dirname, '../libraries');
+    const frpcPath = path.resolve(librariesDir, 'frpc' + (os.platform() === 'win32' ? '.exe' : ''));
+    
     const cfg = ejs.render(frpcConfigTemplate, {
       cfg: serverConfig.tunnel,
       host: serverConfig.tunnel.community.enabled ? serverConfig.tunnel.community.host : ((serverConfig.tunnel.region == "pldx") ? "pldx.duckdns.org" : (serverConfig.tunnel.region + ".fmtuner.org")),
@@ -92,4 +100,4 @@ httpPassword = "<%= cfg.httpPassword %>"
 <% } %>
 `;
 
-module.exports = connect;
+module.exports = { connect, download};

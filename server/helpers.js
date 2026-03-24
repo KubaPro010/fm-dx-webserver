@@ -292,17 +292,6 @@ function kickClient(ipAddress) {
   } else consoleCmd.logInfo(`Kicking client ${ipAddress} failed. No suitable client found.`);
 }
 
-function checkIPv6Support(callback) {
-  const server = net.createServer();
-
-  server.listen(0, '::1', () => {
-    server.close(() => callback(true));
-  }).on('error', (error) => {
-    if (error.code === 'EADDRNOTAVAIL') callback(false);
-    else callback(false);
-  });
-}
-
 function checkLatency(host, port = 80, timeout = 2000) {
   return new Promise(resolve => {
     const start = Date.now();
@@ -459,7 +448,7 @@ function getIpAddress(request) {
 module.exports = {
   authenticateWithXdrd, parseMarkdown, handleConnect,
   removeMarkdown, formatUptime, resolveDataBuffer,
-  kickClient, checkIPv6Support, checkLatency,
+  kickClient, checkLatency,
   antispamProtection, escapeHtml, findServerFiles,
   startPluginsWithDelay, getIpAddress
 }

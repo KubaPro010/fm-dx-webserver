@@ -10,7 +10,7 @@ const WebSocket = require('ws');
 const path = require('path');
 const net = require('net');
 const { SerialPort } = require('serialport');
-const tunnel_connect = require('./tunnel');
+const tunnel = require('./tunnel');
 const { createChatServer } = require('./chat');
 const figlet = require('figlet');
 
@@ -71,9 +71,9 @@ app.use(sessionMiddleware);
 app.use(bodyParser.json());
 createChatServer(storage);
 
+tunnel.download();
 connectToXdrd();
 connectToSerial();
-tunnel_connect();
 
 // Serialport retry code when port is open but communication is lost (additional code in datahandler.js)
 dataHandler.state.isSerialportRetrying = false;
@@ -285,7 +285,7 @@ app.use('/', endpoints);
 const tunerLockTracker = new WeakMap();
 const ipConnectionCounts = new Map(); // Per-IP limit variables
 const ipLogTimestamps = new Map();
-const MAX_CONNECTIONS_PER_IP = 5;
+const MAX_CONNECTIONS_PER_IP = 4;
 const IP_LOG_INTERVAL_MS = 60000;
 // Remove old per-IP limit addresses
 setInterval(() => {
@@ -502,20 +502,23 @@ pluginsWss.on('connection', (ws, request) => {
         // Anti-spam
         helpers.antispamProtection(message, clientIp, ws, userCommands, lastWarn, userCommandHistory, '10', 'data_plugins');
 
-        let messageData;
+        try {
+            let messageData = JSON.parse(message); // Attempt to parse the JSON
+                        
+            if (messageData.type === "GPS" && messageData.value) {
+                const gpsData = messageData.value;
+                const { status, time, lat, lon, alt, mode } = gpsData;
 
-        try { // JS Requires the try statement to have braces, unlike the if statement. This extends the huge list of proofs that this is a fucking toy language
-            messageData = JSON.parse(message); // Attempt to parse the JSON
-        } catch (error) {
-            // console.error("Failed to parse message:", error); // Log the error
-            return; // Exit if parsing fails
-        }
-
-        const modifiedMessage = JSON.stringify(messageData);
-
+                if (status === "active") {
+                    Latitude = parseFloat(lat);
+                    Longitude = parseFloat(lon);
+                }
+            }
+        } catch (error) {}
+        
         // Broadcast the message to all other clients
         pluginsWss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) client.send(modifiedMessage); // Send the message to all clients
+            if (client.readyState === WebSocket.OPEN) client.send(message); // Send the message to all clients
         });
     });
 
@@ -524,7 +527,6 @@ pluginsWss.on('connection', (ws, request) => {
     });
 });
 
-// Websocket register for /text, /audio and /chat paths
 httpServer.on('upgrade', (request, socket, head) => { 
   const clientIp = helpers.getIpAddress(request);
   if (serverConfig.webserver.banlist?.includes(clientIp)) {
@@ -543,30 +545,24 @@ httpServer.on('upgrade', (request, socket, head) => {
 });
 
 app.use(express.static(path.join(__dirname, '../web'))); // Serve the entire web folder to the user
-fmdxList.update();
-
-helpers.checkIPv6Support((isIPv6Supported) => {
-  const ipv4Address = serverConfig.webserver.webserverIp === '0.0.0.0' ? 'localhost' : serverConfig.webserver.webserverIp;
-  const ipv6Address = '::'; // This will bind to all available IPv6 interfaces
-  const port = serverConfig.webserver.webserverPort;
-
-  const logServerStart = (address, isIPv6) => {
-    const formattedAddress = isIPv6 ? `[${address}]` : address;
-    logInfo(`Web server has started on address \x1b[34mhttp://${formattedAddress}:${port}\x1b[0m.`);
-  };
-
-  const startServer = (address, isIPv6) => {
-    httpServer.listen(port, address, () => {
-      if (!isIPv6 && !configExists()) logInfo(`Open your browser and proceed to \x1b[34mhttp://${address}:${port}\x1b[0m to continue with setup.`);
-      else logServerStart(address, isIPv6);
-    });
-  };
-
-  if (isIPv6Supported) {
-    startServer(ipv4Address, false); // Start on IPv4
-    startServer(ipv6Address, true);  // Start on IPv6
-  } else startServer(ipv4Address, false); // Start only on IPv4
-});
-
 pluginsApi.registerServerContext({ wss, pluginsWss, httpServer, serverConfig });
+
+const ipv4Address = serverConfig.webserver.webserverIp === '0.0.0.0' ? 'localhost' : serverConfig.webserver.webserverIp;
+const port = serverConfig.webserver.webserverPort;
+
+const logServerStart = (address) => {
+  logInfo(`Web server has started on address \x1b[34mhttp://${address}:${port}\x1b[0m.`);
+};
+
+const startServer = (address) => {
+  httpServer.listen(port, address, () => {
+    if (!configExists()) logInfo(`Open your browser and proceed to \x1b[34mhttp://${address}:${port}\x1b[0m to continue with setup.`);
+    else logServerStart(address);
+  });
+};
+
+
+startServer(ipv4Address);
+tunnel.connect();
+fmdxList.update();
 module.exports = { wss, pluginsWss, httpServer, serverConfig };

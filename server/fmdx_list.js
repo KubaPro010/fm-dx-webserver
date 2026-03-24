@@ -23,8 +23,7 @@ function send(request) {
     .then(response => response.json())
     .then(data => {
         if (data.success && data.token) {
-          if (!serverConfig.identification.token)
-          {
+          if (!serverConfig.identification.token) {
             logInfo("Registered to FM-DX Server Map successfully.");
             serverConfig.identification.token = data.token;
             configSave();

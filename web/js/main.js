@@ -615,7 +615,7 @@ let dataTimeoutPrevious = null;
 let connectionLost = false;
 let requiresAudioStreamRestart = false;
 
-const TIMEOUT_DURATION = 5000;  // 5 seconds timeout for lost connection
+const TIMEOUT_DURATION = 3500;  // 5 seconds timeout for lost connection
 
 const resetDataTimeout = () => {
     clearTimeout(dataTimeout);

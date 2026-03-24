@@ -20,7 +20,7 @@ let serverConfig = {
     banlist: [],
     chatEnabled: true,
     tuningLimit: false,
-    tuningLowerLimit: "100",
+    tuningLowerLimit: "65",
     tuningUpperLimit: "108",
     presets: [
       "87.5",

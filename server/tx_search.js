@@ -42,35 +42,6 @@ if (typeof algorithms[algoSetting] !== 'undefined') {
 // Build the TX database.
 setTimeout(buildTxDatabase, 3000);
 
-if (serverConfig.identification.gpsMode) {
-    // 5-second delay before activation of GPS lat/lon websocket
-    setTimeout(() => {
-        const websocket = new WebSocket(externalWsUrl);
-        consoleCmd.logInfo('Set up GPS websocket for lat/lon');
-        // Event listener to receive data
-        websocket.on('message', (data) => {
-            try {
-                // Parse the received data
-                const parsedData = JSON.parse(data);
-
-                // Check if the dataset is of type GPS
-                if (parsedData.type === "GPS" && parsedData.value) {
-                    const gpsData = parsedData.value;
-                    const { status, time, lat, lon, alt, mode } = gpsData;
-
-                    if (status === "active") {
-                        Latitude = parseFloat(lat);
-                        Longitude = parseFloat(lon);
-                    }
-                }
-            } catch (error) {
-                consoleCmd.logError("Error processing WebSocket data:", error);
-            }
-        });
-
-    }, 5000);
-}
-
 // Function to build local TX database from FMDX Maps endpoint.
 async function buildTxDatabase() {
     if (Latitude.length > 0 && Longitude.length > 0) {
@@ -362,12 +333,11 @@ function checkEs() {
 }
 
 function haversine(lat1, lon1, lat2, lon2) {
-    const R = 6371;
     const dLat = deg2rad(lat2 - lat1);
     const dLon = deg2rad(lon2 - lon1);
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
+    const distance = 6371 * c;
 
     const y = Math.sin(dLon) * Math.cos(deg2rad(lat2));
     const x = Math.cos(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) - Math.sin(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(dLon);
